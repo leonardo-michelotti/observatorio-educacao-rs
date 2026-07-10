@@ -1,0 +1,34 @@
+# Dados brutos e derivados (grandes; regeneráveis pelo pipeline)
+data/
+*.duckdb
+*.duckdb.wal
+*.parquet
+*.zip
+*.csv
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.env
+.env.*
+
+# dbt
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+
+# Evidence / Node (fase futura)
+node_modules/
+.evidence/
+
+# SO / editores
+.DS_Store
+.vscode/
+*.log
+
+# Exceção: gráficos gerados SÃO versionados (usados no README)
+!assets/*.png
+!assets/*.svg
