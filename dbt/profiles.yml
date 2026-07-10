@@ -1,0 +1,8 @@
+observatorio:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      # relativo à raiz do repo (dbt é sempre invocado de lá pelo run_pipeline.py)
+      path: 'data/educacao.duckdb'
+      threads: 4

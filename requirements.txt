@@ -1,0 +1,16 @@
+# Ingestão — consulta os dados públicos da Base dos Dados no BigQuery
+# (cliente BQ direto: mais leve que o pacote `basedosdados` e sem conflito com o dbt)
+google-cloud-bigquery>=3.25
+db-dtypes>=1.2          # converte resultado do BigQuery -> pandas
+pandas>=2.0
+pyarrow>=15
+
+# Lakehouse + transformação
+duckdb>=1.1
+dbt-duckdb>=1.9
+
+# Visualização
+matplotlib>=3.8
+
+# Utilitários
+python-dotenv>=1.0

@@ -14,6 +14,7 @@ __pycache__/
 .ipynb_checkpoints/
 .env
 .env.*
+!.env.example
 
 # dbt
 dbt/target/
