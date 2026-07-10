@@ -1,80 +1,122 @@
 # Observatório da Educação — RS & Santa Maria
 
-> Pipeline de dados de ponta a ponta sobre **educação básica pública** no Rio Grande do Sul,
-> com recorte em **Santa Maria/RS**. Ingestão de dado público oficial → modelagem →
-> painel — e os gráficos-chave vivem **dentro deste README**, atualizados pelo próprio pipeline.
+> Pipeline de dados de ponta a ponta sobre **educação básica** no Rio Grande do Sul, com
+> recorte em **Santa Maria/RS**. Dado público oficial (INEP) → lakehouse → transformação
+> testada → gráficos — e a **vitrine vive dentro deste README**, gerada pelo próprio pipeline.
 
-![status](https://img.shields.io/badge/status-em%20constru%C3%A7%C3%A3o-orange)
-![stack](https://img.shields.io/badge/stack-DuckDB%20%C2%B7%20dbt%20%C2%B7%20Dagster-blue)
+![stack](https://img.shields.io/badge/stack-BigQuery%20%C2%B7%20DuckDB%20%C2%B7%20dbt%20%C2%B7%20matplotlib-blue)
+![status](https://img.shields.io/badge/pipeline-verde-brightgreen)
 
-> ⚠️ **Em construção (Fase 0 — levantamento de fontes).** A vitrine de gráficos entra na Fase 2.
+Como Santa Maria se compara ao RS e ao Brasil na educação básica pública — e como isso
+evolui no tempo. Não é só um gráfico: é o **pipeline inteiro** (ingestão → bronze →
+silver/gold com testes → visualização), reprodutível com um comando.
 
 ---
 
-## O que é
+## A vitrine
 
-Um projeto de **engenharia de dados** que responde perguntas sociais concretas sobre a
-educação básica — *como a rede pública de Santa Maria se compara ao RS e ao Brasil, e como
-isso evolui no tempo*. Fonte: dados abertos oficiais (INEP, IBGE, Governo do RS).
+### IDEB — rede pública, Ensino Fundamental
 
-Não é só um dashboard: é o **pipeline inteiro** — ingestão, lakehouse, transformação testada,
-orquestração e visualização — construído com o stack open-source atual.
+![IDEB — Santa Maria vs RS vs Brasil](assets/ideb.png)
 
-## Perguntas que o projeto responde
+**IDEB 2023 (rede pública):**
 
-- 📈 Como evoluiu o **IDEB** de Santa Maria vs. RS vs. Brasil?
-- 🚸 **Fluxo escolar**: aprovação, reprovação e abandono ao longo dos anos
-- ⏳ **Distorção idade-série** — quantos alunos estão atrasados
-- 🏫 **Infraestrutura** das escolas (água, esgoto, internet, biblioteca, laboratório)
-- 👥 **Matrículas** por sexo, cor/raça, zona (urbana/rural) e rede
+| Etapa | Santa Maria | RS | Brasil |
+|---|:-:|:-:|:-:|
+| EF · Anos iniciais | **5,8** | 5,8 | 5,7 |
+| EF · Anos finais | **4,6** | 4,7 | 4,7 |
+
+Santa Maria acompanha de perto o estado e o país nos anos iniciais (empata com o RS,
+acima do Brasil) e fica um décimo abaixo nos anos finais — o gargalo clássico da
+transição para o 6º ano, visível nos três níveis.
+
+### Taxa de aprovação — Ensino Fundamental
+
+![Taxa de aprovação — Santa Maria vs RS vs Brasil](assets/taxa_aprovacao.png)
+
+**Taxa de aprovação, último ano disponível:**
+
+| Etapa | Santa Maria | RS | Brasil |
+|---|:-:|:-:|:-:|
+| EF · Anos iniciais | 97,5% (2024) | 96,0% (2024) | 98,3% (2025) |
+| EF · Anos finais | **97,4% (2024)** | 91,4% (2024) | 96,2% (2025) |
+
+Nos anos finais, Santa Maria salta a partir de ~2019 e passa a liderar a comparação —
+contraste forte com a curva mais baixa do RS na mesma etapa.
+
+---
 
 ## Arquitetura
 
 ```mermaid
 flowchart LR
-  subgraph Fontes["Fontes públicas"]
-    INEP[INEP<br/>Censo Escolar · IDEB]
-    IBGE[IBGE<br/>população]
-    RS[dados.rs.gov.br<br/>API CKAN]
-  end
-  INEP & IBGE & RS --> ING[Ingestão<br/>Python / dlt]
+  BQ[Base dos Dados<br/>BigQuery · INEP] --> ING[Ingestão<br/>google-cloud-bigquery]
   ING --> BRONZE[(Bronze<br/>Parquet)]
-  BRONZE --> DBT[dbt + DuckDB<br/>silver · gold]
-  DBT --> CHARTS[Gráficos PNG/SVG]
-  DBT --> PANEL[Painel interativo]
-  CHARTS --> README[README vivo]
-  DAG[Dagster / GitHub Actions] -.orquestra.-> ING & DBT & CHARTS
+  BRONZE --> DBT[dbt-duckdb<br/>staging · marts + testes]
+  DBT --> DUCK[(DuckDB<br/>educacao.duckdb)]
+  DUCK --> CHARTS[matplotlib<br/>PNG em assets/]
+  CHARTS --> README[Vitrine no README]
 ```
-
-## Stack
 
 | Camada | Ferramenta |
 |---|---|
-| Ingestão | Python + [`dlt`](https://dlthub.com/) |
-| Lakehouse | [DuckDB](https://duckdb.org/) + Parquet (arquitetura medalhão) |
-| Transformação | [dbt](https://www.getdbt.com/) (`dbt-duckdb`) + testes |
-| Orquestração | [Dagster](https://dagster.io/) / GitHub Actions |
-| Visualização | Gráficos no README + painel ([Evidence](https://evidence.dev/) / Streamlit) |
+| Ingestão | Python + [`google-cloud-bigquery`](https://cloud.google.com/python/docs/reference/bigquery) (consulta a [Base dos Dados](https://basedosdados.org/)) |
+| Lakehouse | [DuckDB](https://duckdb.org/) + Parquet (arquitetura medalhão: bronze → silver → gold) |
+| Transformação | [dbt](https://www.getdbt.com/) (`dbt-duckdb`) com testes de schema |
+| Visualização | [matplotlib](https://matplotlib.org/) → PNG versionados no repo |
 
-## Fontes de dados
+O runner [`run_pipeline.py`](run_pipeline.py) encadeia as três etapas de forma idempotente.
 
-Mapa completo, com links e checagem de acesso, em [`docs/PESQUISA_FONTES.md`](docs/PESQUISA_FONTES.md).
+## Recorte e metodologia
 
-| Fonte | O que dá | Recorte local |
-|---|---|---|
-| **INEP** (microdados) | Censo Escolar, IDEB, SAEB | filtra Santa Maria (`4316907`) e RS (UF `43`) |
-| **dados.rs.gov.br** | matrículas/turmas/docentes agregados (API CKAN, CSV) | estado RS |
-| **IBGE** | população, contexto socioeconômico | município/estado |
+- **Níveis geográficos:** Santa Maria (`4316907`) · Rio Grande do Sul · Brasil.
+- **Fonte:** INEP (`br_inep_ideb`, `br_inep_indicadores_educacionais`) via Base dos Dados no BigQuery.
+- **IDEB:** rede **pública** — única comparável nos três níveis no Ensino Fundamental.
+- **Taxa de aprovação:** rede/localização **total**, com filtro de validade (valor em `[40, 100]`)
+  que descarta pontos corrompidos isolados da fonte.
+- **Modelo tidy** (`fct_indicadores`): uma linha por `(indicador, nível, etapa, ano, valor)`,
+  com testes dbt (`not_null`, `accepted_values`) em todas as chaves.
 
-## Roadmap
+## ⚠️ Notas de qualidade de dados (transparência)
 
-- [x] **Fase 0** — levantamento e validação das fontes
-- [ ] **Fase 1** — recorte v1 (IDEB + Censo) no medalhão (bronze→silver→gold)
-- [ ] **Fase 2** — vitrine de gráficos no README
-- [ ] **Fase 3** — painel interativo (deploy)
-- [ ] **Fase 4** — README vivo (GitHub Actions agenda a atualização)
-- [ ] **Fase 5** — novas fontes e perguntas
+Decisões tomadas porque **os dados mandam sobre o plano**:
+
+- **Distorção idade-série foi retirada da vitrine.** Na fonte, a série do RS é irreal
+  (~1,5% na década toda vs. ~15% do Brasil) e os anos 2023–2024 estão corrompidos para RS e
+  Santa Maria. Sem comparação honesta possível, o indicador saiu (as colunas `tdi_*` ainda são
+  extraídas ao bronze como referência bruta — ver [`stg_indicadores.sql`](dbt/models/staging/stg_indicadores.sql)).
+- **Ensino médio não entra nos gráficos.** É competência estadual: Santa Maria mal reporta
+  IDEB de EM (2 anos) e a série de aprovação/EM do RS é esburacada/corrompida na origem. Os
+  gráficos só renderizam etapas com série mínima nos três níveis (Ensino Fundamental).
+
+## Como rodar
+
+Pré-requisitos: Python 3.12+, uma conta Google Cloud (grátis; 1 TB/mês de consulta no
+BigQuery) e projeto com a BigQuery API ativa. Passo a passo detalhado em
+[`docs/COMO_RODAR.md`](docs/COMO_RODAR.md).
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+gcloud auth application-default login          # autentica o ADC (abre o navegador)
+cp .env.example .env                           # e preencha BILLING_PROJECT_ID
+
+python run_pipeline.py                         # ingest → dbt build → gráficos
+```
+
+Ao final: dados em `data/educacao.duckdb`, gráficos atualizados em `assets/`.
+
+## Estrutura
+
+```
+ingestion/extract_bd.py   Base dos Dados (BigQuery) → Parquet bronze
+dbt/models/staging/       stg_ideb, stg_indicadores (limpeza + unpivot)
+dbt/models/marts/         fct_indicadores (fato tidy + testes)
+viz/make_charts.py        DuckDB → PNGs em assets/
+run_pipeline.py           orquestra as três etapas
+```
 
 ---
 
-*Projeto pessoal de portfólio de Leonardo Michelotti. Dados de fontes públicas oficiais.*
+*Projeto pessoal de portfólio de dados. Fonte: INEP via Base dos Dados. Dados públicos oficiais.*

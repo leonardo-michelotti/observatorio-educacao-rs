@@ -1,49 +1,25 @@
-# Retomar — estado da execução (auto mode v1)
+# Retomar — estado da execução
 
-Última sessão parou aqui (10/07/2026). Reinício de PC pendente.
+**Status (10/07/2026): pipeline v1 concluído ✅** — a vitrine está no [`README.md`](README.md).
 
-## Onde estamos
-- **M0 (auth GCP):** ❌ credencial do Google **não** criada (o `gcloud auth application-default login`
-  não completou — WSL sem navegador; precisa abrir a URL no navegador do Windows).
-- **M1 (scaffold):** ✅ commitado e pushado (`bf5189c`). Mas o `pip install` **não terminou**
-  (só `duckdb` instalou) e falta rodar `dbt debug`.
-- **M2–M6:** não iniciados.
+## O que está pronto (M0–M6)
+- **M0 — auth GCP:** ✅ ADC via conta pessoal; projeto de billing `observatorio-educacao-502019`.
+  `.env` aponta `GOOGLE_APPLICATION_CREDENTIALS` e `BILLING_PROJECT_ID`.
+- **M1 — ambiente:** ✅ `.venv` completo; `dbt debug` verde.
+- **M2 — ingestão:** ✅ `ingestion/extract_bd.py` (BigQuery → `data/bronze/*.parquet`).
+- **M3 — transformação:** ✅ models dbt (`stg_ideb`, `stg_indicadores`, `fct_indicadores`) + 8 testes.
+- **M4 — gráficos:** ✅ `viz/make_charts.py` → `assets/ideb.png`, `assets/taxa_aprovacao.png`.
+- **M5/M6 — vitrine:** ✅ README com gráficos, tabelas-resumo e notas de qualidade.
 
-## Para retomar (2 passos humanos, depois o loop segue sozinho)
-
-### 1. Terminar o setup do Python
-```bash
-cd /mnt/c/Projetos/observatorio-educacao-rs
-source .venv/bin/activate
-pip install -r requirements.txt          # completar o que faltou
-```
-
-### 2. Autenticar no Google (1x) — o gargalo do M0
-O WSL não tem navegador, então:
-```bash
-gcloud auth application-default login --no-launch-browser
-```
-Isso mostra uma **URL** e pede um **código**. Abra a URL no navegador do **Windows**, faça login,
-copie o código de volta pro terminal. (O modo `--no-launch-browser` é mais garantido no WSL do que
-o padrão, que trava esperando `localhost`.)
-
-Depois, descubra/anote seu **Project ID** do Google Cloud:
-```bash
-gcloud config get-value project
-```
+Rodar tudo: `python run_pipeline.py` (ingest → dbt build → gráficos).
 
 ## Decisões travadas (não reabrir)
-- Fonte: **Base dos Dados** no BigQuery (via cliente `google-cloud-bigquery`, não o pacote basedosdados).
-- Recorte: **Santa Maria `4316907`** vs **RS** vs **Brasil**. Indicadores v1: **IDEB · taxas de
-  rendimento · distorção idade-série**.
-- Stack: BQ → Parquet bronze → dbt-duckdb (silver/gold) → matplotlib PNG → README (a vitrine).
-- Escopo do loop: **até a vitrine no README**; commit+push a cada etapa; **sem** deploy/tornar público.
-- Plano completo: `~/.claude/plans/snug-marinating-dolphin.md`.
+- Fonte: Base dos Dados no BigQuery (cliente `google-cloud-bigquery`).
+- Recorte: Santa Maria `4316907` vs RS vs Brasil.
+- **Indicadores v1:** IDEB (rede pública, EF) + taxa de aprovação (EF). **Distorção idade-série
+  e Ensino Médio foram excluídos por qualidade de dados na origem** — detalhes no README.
+- Escopo: até a vitrine no README; sem deploy/tornar público.
 
-## Próximo passo do Claude ao retomar
-1. Confirmar install completo + `dbt debug` verde (fecha M1).
-2. Localizar o arquivo de ADC gerado, apontar `GOOGLE_APPLICATION_CREDENTIALS`/`.env`
-   (`BILLING_PROJECT_ID`) e testar `SELECT 1` no BigQuery (M0).
-3. **M2:** descobrir schema real das tabelas no BD (`br_inep_ideb`, `br_inep_indicadores_educacionais`),
-   extrair os 3 indicadores nos 3 níveis → `data/bronze/*.parquet`.
-4. Seguir M3→M6 (dbt silver/gold → gráficos → README), commitando a cada milestone.
+## Próximos passos possíveis (fora do escopo v1)
+- Investigar fonte alternativa para distorção idade-série (a tabela de indicadores do RS é irreal).
+- Painel interativo (Evidence/Streamlit) e agendamento (GitHub Actions) para README vivo.
