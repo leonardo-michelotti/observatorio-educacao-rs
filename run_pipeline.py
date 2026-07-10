@@ -25,7 +25,10 @@ def step_ingest():
 
 
 def step_dbt():
-    run(["dbt", "build", "--project-dir", "dbt", "--profiles-dir", "dbt"])
+    # usa o dbt do mesmo ambiente que roda este script (ao lado do python),
+    # pra não depender do venv estar ativado no PATH.
+    dbt = Path(sys.executable).with_name("dbt")
+    run([str(dbt), "build", "--project-dir", "dbt", "--profiles-dir", "dbt"])
 
 
 def step_charts():

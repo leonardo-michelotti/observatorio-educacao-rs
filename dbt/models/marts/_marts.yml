@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: fct_indicadores
+    description: >
+      Fato tidy com um valor por (indicador, nível geográfico, etapa, ano).
+      Base da vitrine: compara Santa Maria, RS e Brasil ao longo do tempo.
+    columns:
+      - name: nivel
+        description: Nível geográfico.
+        tests:
+          - not_null
+          - accepted_values:
+              values: [brasil, rs, santa_maria]
+      - name: ano
+        tests: [not_null]
+      - name: indicador
+        tests:
+          - not_null
+          - accepted_values:
+              values: [ideb, taxa_aprovacao]
+      - name: etapa
+        tests:
+          - not_null
+          - accepted_values:
+              values: [ef_anos_iniciais, ef_anos_finais, em]
+      - name: valor
+        tests: [not_null]
