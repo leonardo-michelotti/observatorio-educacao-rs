@@ -69,9 +69,11 @@ Dados: IDEB EF (2005–2023) e taxa de aprovação (2007–2025) em 3 níveis (S
 
 ## Frente D — Visualização e dashboard
 
-- [ ] **D1 · Dashboard interativo.** 🔥 Página única com tudo (filtros por etapa/indicador/
-  nível, hover, tema claro/escuro). Opções: HTML autocontido (Artifact) · Evidence.dev · Streamlit.
-  - *Decidir:* meio de entrega (ver `PESQUISA_FONTES.md` §3 — GitHub sanitiza JS no README).
+- [x] **D1 · Dashboard interativo.** 🔥 ✅ **FEITO.** `viz/build_dashboard.py` (DuckDB → HTML
+  autocontido) gera `viz/dashboard.html`: filtros por indicador/etapa, série temporal SM/RS/Brasil
+  com crosshair+tooltip, rótulos diretos, visão de tabela, tema claro/escuro. Paleta categórica
+  revalidada (light + dark próprios) e renderização conferida por screenshot nos dois temas.
+  Plugado no `run_pipeline.py` como 4ª etapa. Publicado como Artifact.
 - [ ] **D2 · Perfil da escola.** 🔥 Depende de A1: painel do seu colégio (IDEB no tempo,
   SAEB Mat vs Port, ranking dentro de Santa Maria).
 - [ ] **D3 · Gráficos novos.** 🟡 Ranking de escolas de Santa Maria; gap vs meta INEP;

@@ -35,13 +35,19 @@ def step_charts():
     run([sys.executable, "viz/make_charts.py"])
 
 
+def step_dashboard():
+    run([sys.executable, "viz/build_dashboard.py"])
+
+
 def main():
     if not os.environ.get("BILLING_PROJECT_ID"):
         sys.exit("BILLING_PROJECT_ID não definido — configure o .env (veja docs/COMO_RODAR.md).")
     step_ingest()
     step_dbt()
     step_charts()
-    print("\n✅ Pipeline completo. Gráficos em assets/, dados em data/educacao.duckdb.")
+    step_dashboard()
+    print("\n✅ Pipeline completo. Gráficos em assets/, painel em viz/dashboard.html, "
+          "dados em data/educacao.duckdb.")
 
 
 if __name__ == "__main__":

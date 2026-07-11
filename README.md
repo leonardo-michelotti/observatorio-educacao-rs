@@ -110,7 +110,12 @@ flowchart LR
 | Transformação | [dbt](https://www.getdbt.com/) (`dbt-duckdb`) com testes de schema |
 | Visualização | [matplotlib](https://matplotlib.org/) → PNG versionados no repo |
 
-O runner [`run_pipeline.py`](run_pipeline.py) encadeia as três etapas de forma idempotente.
+O runner [`run_pipeline.py`](run_pipeline.py) encadeia as etapas de forma idempotente.
+
+> **Painel interativo.** Além dos PNGs da vitrine, o pipeline gera
+> [`viz/dashboard.html`](viz/dashboard.html) — uma página única e autocontida com filtros por
+> indicador/etapa, hover com tooltip, visão de tabela e tema claro/escuro (o GitHub sanitiza JS,
+> então abra o arquivo localmente). Feito por [`viz/build_dashboard.py`](viz/build_dashboard.py).
 
 ## Recorte e metodologia
 
@@ -169,8 +174,9 @@ Ao final: dados em `data/educacao.duckdb`, gráficos atualizados em `assets/`.
 ingestion/extract_bd.py   Base dos Dados (BigQuery) → Parquet bronze (IDEB + SAEB + indicadores)
 dbt/models/staging/       stg_ideb, stg_indicadores (limpeza + unpivot + curadoria)
 dbt/models/marts/         fct_indicadores (fato tidy + testes)
-viz/make_charts.py        DuckDB → PNGs em assets/
-run_pipeline.py           orquestra as três etapas
+viz/make_charts.py        DuckDB → PNGs em assets/ (vitrine do README)
+viz/build_dashboard.py    DuckDB → viz/dashboard.html (painel interativo autocontido)
+run_pipeline.py           orquestra as quatro etapas
 docs/MELHORIAS.md         investigação viva de melhorias e achados
 ```
 
