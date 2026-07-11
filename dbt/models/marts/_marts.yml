@@ -18,7 +18,7 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: [ideb, taxa_aprovacao]
+              values: [ideb, taxa_aprovacao, saeb_matematica, saeb_lingua_portuguesa, distorcao_idade_serie]
       - name: etapa
         tests:
           - not_null

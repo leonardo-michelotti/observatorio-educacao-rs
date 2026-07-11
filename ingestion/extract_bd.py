@@ -32,7 +32,12 @@ NIVEIS = {
     "santa_maria": ("municipio", f"AND id_municipio = '{MUNICIPIO_SANTA_MARIA}'"),
 }
 
-IDEB_COLS = "ano, ensino, anos_escolares, ideb, taxa_aprovacao, indicador_rendimento"
+IDEB_COLS = (
+    "ano, ensino, anos_escolares, ideb, taxa_aprovacao, indicador_rendimento, "
+    # componentes de proficiência do IDEB — permitem decompor o índice (proficiência x
+    # rendimento) e ver a perda de aprendizagem da pandemia. Ver docs/MELHORIAS.md (A2/AF-1).
+    "nota_saeb_matematica, nota_saeb_lingua_portuguesa"
+)
 IND_COLS = (
     "ano, "
     "taxa_aprovacao_ef_anos_iniciais, taxa_aprovacao_ef_anos_finais, taxa_aprovacao_em, "

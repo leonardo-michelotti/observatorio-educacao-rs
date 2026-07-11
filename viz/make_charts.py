@@ -39,8 +39,11 @@ ETAPAS = {
     "em": "Ensino médio",
 }
 INDICADORES = {
-    "ideb": ("IDEB", "IDEB (0–10)", "ideb"),
-    "taxa_aprovacao": ("Taxa de aprovação", "% de aprovação", "taxa_aprovacao"),
+    "ideb": ("IDEB", "IDEB (0–10)"),
+    "taxa_aprovacao": ("Taxa de aprovação", "% de aprovação"),
+    "saeb_matematica": ("SAEB · Matemática", "Proficiência (escala SAEB)"),
+    "saeb_lingua_portuguesa": ("SAEB · Língua Portuguesa", "Proficiência (escala SAEB)"),
+    "distorcao_idade_serie": ("Distorção idade-série", "% em distorção idade-série"),
 }
 
 
@@ -74,15 +77,20 @@ def _load(con, indicador):
 
 
 def make_figure(con, indicador):
-    titulo, unidade, _ = INDICADORES[indicador]
+    titulo, unidade = INDICADORES[indicador]
     data = _load(con, indicador)
-    # só renderiza a etapa se os 3 níveis tiverem série mínima (>=5 anos). Evita
-    # subplot capenga: no ensino médio a base é esburacada/corrompida para RS e
-    # Santa Maria (EM é competência estadual, e a tabela de indicadores tem a série
-    # EM do RS irreal), então EM cai fora e sobra o Ensino Fundamental, sólido.
+    # renderiza a etapa se PELO MENOS 2 níveis tiverem série mínima (>=5 anos), e plota
+    # só os níveis que atingem esse mínimo. Evita subplot capenga (ex.: EM, esburacado/
+    # corrompido para RS e Santa Maria, cai fora) mas permite comparações de 2 níveis —
+    # caso da distorção idade-série, onde o RS foi curado e sobra Santa Maria vs Brasil.
     min_pontos = 5
     etapas = [e for e in ETAPAS
-              if e in data and all(len(data[e].get(n, [])) >= min_pontos for n in NIVEIS)]
+              if e in data and sum(len(data[e].get(n, [])) >= min_pontos for n in NIVEIS) >= 2]
+    # níveis que de fato aparecem (>= min_pontos em alguma etapa renderizada), na ordem fixa.
+    # Alimenta um subtítulo honesto: não anuncia "vs RS" num gráfico onde o RS foi curado.
+    niveis_presentes = [n for n in NIVEIS
+                        if any(len(data[e].get(n, [])) >= min_pontos for e in etapas)]
+    subtitulo = " vs ".join(NIVEIS[n][0] for n in niveis_presentes)
 
     fig, axes = plt.subplots(
         1, len(etapas), figsize=(4.6 * len(etapas), 3.9), sharey=True
@@ -96,7 +104,7 @@ def make_figure(con, indicador):
         ax.set_title(ETAPAS[etapa], color=INK, fontsize=10, fontweight="bold", pad=8)
         for nivel, (rotulo, cor) in NIVEIS.items():
             serie = sorted(data[etapa].get(nivel, []))
-            if not serie:
+            if len(serie) < min_pontos:
                 continue
             xs = [a for a, _ in serie]
             ys = [v for _, v in serie]
@@ -109,10 +117,10 @@ def make_figure(con, indicador):
         ax.margins(x=0.08)
 
     axes[0].set_ylabel(unidade, color=INK_2, fontsize=9)
-    fig.suptitle(f"{titulo} · Santa Maria vs RS vs Brasil", color=INK,
+    fig.suptitle(f"{titulo} · {subtitulo}", color=INK,
                  fontsize=13, fontweight="bold", x=0.01, ha="left", y=0.99)
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False,
+    fig.legend(handles, labels, loc="lower center", ncol=len(handles), frameon=False,
                fontsize=9, labelcolor=INK_2, bbox_to_anchor=(0.5, -0.02))
     fig.text(0.01, -0.02, "Fonte: INEP via Base dos Dados (BigQuery). Rede pública (IDEB) / total (demais).",
              color=MUTED, fontsize=7.5, ha="left")
