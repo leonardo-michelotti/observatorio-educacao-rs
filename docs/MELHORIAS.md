@@ -80,9 +80,10 @@ Dados: IDEB EF (2005–2023) e taxa de aprovação (2007–2025) em 3 níveis (S
 
 ## Frente E — Narrativa e documentação
 
-- [ ] **E1 · Revisar o README de apresentação.** 🔥 Fortalecer a história (o EM de Santa Maria
-  despencando 3,1→2,4 é uma manchete real e honesta), badges com números-chave, abrir com o
-  achado mais forte.
+- [x] **E1 · Revisar o README de apresentação.** 🔥 ✅ **FEITO.** README reescrito: abre com os
+  3 achados (vale da pandemia, distorção pior que Brasil, EM como gargalo); integra os gráficos
+  novos (SAEB Mat/Port, distorção); tabela de aprovação ganhou a linha de EM; notas de qualidade
+  reescritas (bug da BD, curadoria da distorção, EM). Badge de testes 11/11.
 - [ ] **E2 · Diagrama de arquitetura "de verdade".** 🟡 Hoje só o mermaid inline. Um diagrama
   visual (SVG/HTML, export PNG) como asset do repo.
 - [ ] **E3 · Página de metodologia.** ⚪ Consolidar recorte + decisões de qualidade num doc só.
@@ -119,8 +120,20 @@ Dados: IDEB EF (2005–2023) e taxa de aprovação (2007–2025) em 3 níveis (S
   `taxa_aprovacao`** como Santa Maria vs Brasil (o RS, corrompido, cai sozinho). O dado é
   limpo (Brasil 74→94,8%; SM 64→78,2%) e o achado é forte: a aprovação de EM de Santa Maria
   (~78%) fica **muito abaixo do Brasil (~95%)** — coerente com o IDEB de EM baixo (2,4).
-  ⚠️ Contradiz a nota atual do README ("EM não entra nos gráficos") → **pendência para a E1**
-  (integrar EM de aprovação à narrativa e atualizar a nota de qualidade).
+  ✅ **Resolvido na E1:** README passou a mostrar a linha de EM na tabela de aprovação e a nota
+  de qualidade foi reescrita ("EM entra só onde o dado aguenta").
+
+- **AF-6 · A corrupção é da Base dos Dados, não do INEP (investigação de fonte).** Auditoria
+  das fatias rede×localização na tabela crua `br_inep_indicadores_educacionais.uf` mostrou que
+  a coluna quebrada está errada em **todas** as fatias (RS, aprovação de EM 2019: Estadual 4,6%
+  · Pública 6,5% · Privada 11% · Total 7,2% — todas impossíveis). Não é célula isolada: é bug
+  de harmonização da BD. **A fonte oficial do INEP (Taxas de Rendimento / Distorção Idade-Série,
+  por município, 2006–2025) é limpa** — mas o servidor `download.inep.gov.br` (200.130.24.15) é
+  **inacessível deste ambiente** (conexão falha; outros hosts respondem — provável geobloqueio a
+  IP fora do Brasil). Caminhos avaliados: (a) calcular do microdado do Censo no BigQuery, (b)
+  download manual do INEP, (c) manter curadoria. **Decisão: (c)** — manter a curadoria cirúrgica
+  e tratar o bug da BD como limitação conhecida, documentada no README (E1). Reabrir se algum dia
+  o dado do INEP for acessível.
 
 ## Sequência sugerida (a confirmar)
 
