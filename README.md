@@ -10,7 +10,7 @@
 
 **Painel ao vivo:** <https://observatorio-educacao-rs-production.up.railway.app>
 
-Como Santa Maria se compara ao RS e ao Brasil na educação básica pública e como isso
+Como Santa Maria se compara ao RS e ao Brasil por meio dos indicadores da educação básica e como isso
 evolui no tempo. Não é só um gráfico: é o **pipeline inteiro** (ingestão → bronze →
 silver/gold com testes → visualização), reprodutível com um comando.
 
@@ -116,9 +116,11 @@ O runner [`run_pipeline.py`](run_pipeline.py) encadeia as etapas de forma idempo
 
 > **Painel interativo.** Além dos PNGs da vitrine, o pipeline gera uma peça editorial de dados
 > autocontida, com a narrativa "começa forte e perde o passo", gráficos anotados, hover, visão de
-> tabela e tema claro/escuro. Duas saídas de [`viz/build_dashboard.py`](viz/build_dashboard.py):
+> tabela e tema claro/escuro. O mesmo gerador cria uma segunda página dedicada à arquitetura,
+> metodologia e decisões de curadoria. Saídas de [`viz/build_dashboard.py`](viz/build_dashboard.py):
 > [`viz/dashboard.html`](viz/dashboard.html) (abra localmente, pois o GitHub sanitiza JS) e
-> [`public/index.html`](public/index.html) (documento completo pronto para a web).
+> [`viz/arquitetura.html`](viz/arquitetura.html), além de [`public/index.html`](public/index.html)
+> e [`public/arquitetura.html`](public/arquitetura.html), prontos para a web.
 >
 > **No ar.** Dá para publicar num clique: `Dockerfile` + `Caddyfile` (estático, endurecido) +
 > `railway.toml` deixam o painel de pé no [Railway](https://railway.app/) com HTTPS e sem expor
@@ -182,7 +184,7 @@ ingestion/extract_bd.py   Base dos Dados (BigQuery) → Parquet bronze (IDEB + S
 dbt/models/staging/       stg_ideb, stg_indicadores (limpeza + unpivot + curadoria)
 dbt/models/marts/         fct_indicadores (fato tidy + testes)
 viz/make_charts.py        DuckDB → PNGs em assets/ (vitrine do README)
-viz/build_dashboard.py    DuckDB → viz/dashboard.html (painel interativo autocontido)
+viz/build_dashboard.py    DuckDB → páginas autocontidas de análise e arquitetura
 run_pipeline.py           orquestra as quatro etapas
 docs/MELHORIAS.md         investigação viva de melhorias e achados
 ```

@@ -23,6 +23,15 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-se
 b{font-weight:700;} i{font-style:italic;}
 code{font-family:var(--font-sans);font-size:.78em;color:var(--ink-2);letter-spacing:.01em;}
 
+/* persistent site navigation */
+.site-nav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--paper) 94%,transparent);
+  border-bottom:1px solid var(--rule);backdrop-filter:blur(10px);font-family:var(--font-sans);}
+.site-nav-inner{max-width:1040px;margin:0 auto;padding:10px 28px;display:flex;align-items:center;justify-content:space-between;gap:22px;}
+.site-brand{color:var(--ink);font-size:12.5px;font-weight:700;text-decoration:none;white-space:nowrap;}
+.site-links{display:flex;align-items:center;gap:22px;font-size:12.5px;}
+.site-links a{color:var(--muted);text-decoration:none;padding:4px 0;border-bottom:1px solid transparent;}
+.site-links a:hover,.site-links a[aria-current="page"]{color:var(--sm);border-bottom-color:var(--sm);}
+
 /* masthead */
 .masthead{position:relative;border-bottom:2px solid var(--ink);padding-bottom:26px;}
 .kicker{font-family:var(--font-sans);font-size:12.5px;letter-spacing:.02em;color:var(--sm);
@@ -33,9 +42,6 @@ code{font-family:var(--font-sans);font-size:.78em;color:var(--ink-2);letter-spac
 .theme-btn{position:absolute;top:0;right:0;font-family:var(--font-sans);font-size:12px;color:var(--muted);
   background:none;border:1px solid var(--rule);border-radius:2px;padding:4px 9px;cursor:pointer;letter-spacing:.04em;}
 .theme-btn:hover{color:var(--ink);border-color:var(--ink-2);}
-.section-nav{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:24px;font-family:var(--font-sans);font-size:12.5px;}
-.section-nav a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--rule);}
-.section-nav a:hover{color:var(--sm);border-color:var(--sm);}
 
 /* hero */
 .hero{margin:38px 0 8px;}
@@ -114,7 +120,7 @@ code{font-family:var(--font-sans);font-size:.78em;color:var(--ink-2);letter-spac
 .pill{font-family:var(--font-sans);font-size:13.5px;padding:5px 13px;cursor:pointer;border:none;background:none;
   color:var(--muted);border-bottom:2px solid transparent;transition:color .12s,border-color .12s;}
 .pill:hover:not(:disabled){color:var(--ink);}
-.pill[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--sm);font-weight:600;}
+.pill[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--sm);font-weight:600;}
 .pill:disabled{opacity:.32;cursor:not-allowed;}
 .pill:focus-visible,.link-btn:focus-visible,.theme-btn:focus-visible{outline:2px solid var(--sm);outline-offset:2px;}
 .chart-head{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 2px;gap:12px;}
@@ -129,27 +135,38 @@ code{font-family:var(--font-sans);font-size:.78em;color:var(--ink-2);letter-spac
 .sw-rs{background:linear-gradient(90deg,var(--rs) 60%,transparent 60%);background-size:9px 100%;height:3px;}
 .table-wrap{overflow-x:auto;margin-top:12px;}
 table{border-collapse:collapse;width:100%;font-family:var(--font-sans);font-size:13.5px;}
+caption{text-align:left;color:var(--muted);font-size:12px;padding:0 0 8px;}
 th,td{padding:6px 12px;text-align:right;border-bottom:1px solid var(--rule-2);font-variant-numeric:tabular-nums;}
 th:first-child,td:first-child{text-align:left;color:var(--muted);}
 thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
 
-/* architecture and methodology */
-.method{scroll-margin-top:24px;}
-.method h2{font-size:clamp(25px,3.8vw,34px);line-height:1.12;margin:0 0 12px;}
-.method-lede{font-size:18px;color:var(--ink-2);line-height:1.55;margin:0 0 28px;}
-.pipeline{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:0 0 34px;}
-.pipeline div{padding:15px 12px 16px 0;position:relative;}
-.pipeline div:not(:last-child)::after{content:"→";position:absolute;right:5px;top:37px;color:var(--muted);font-family:var(--font-sans);}
-.pipeline span,.pipeline small{display:block;font-family:var(--font-sans);font-size:10.5px;color:var(--muted);line-height:1.35;}
-.pipeline span{text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
-.pipeline b{display:block;font-size:13px;line-height:1.3;margin-bottom:4px;padding-right:12px;}
-.method-block{margin:28px 0;}
-.method-block h3{font-size:20px;margin:0 0 8px;}
-.method-block p,.method-block li{font-size:16px;color:var(--ink-2);line-height:1.55;}
-.method-block p{margin:0 0 10px;}
-.method-block ul{margin:8px 0 0;padding-left:20px;}
-.method-block li{margin:8px 0;padding-left:3px;}
-.method-block li b{color:var(--ink);}
+/* architecture page */
+.architecture{max-width:1040px;}
+.arch-head{position:relative;border-bottom:2px solid var(--ink);padding:0 0 34px;}
+.arch-section{padding:58px 0;border-bottom:1px solid var(--rule);}
+.arch-section h2{font-size:clamp(25px,3.5vw,38px);line-height:1.12;margin:0 0 12px;max-width:22ch;}
+.section-lede{color:var(--ink-2);font-size:17px;max-width:64ch;margin:0 0 28px;}
+.system-map{display:grid;grid-template-columns:repeat(5,1fr);margin-top:32px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);}
+.system-map article{position:relative;padding:18px 20px 20px 0;min-height:150px;}
+.system-map article:not(:last-child)::after{content:"→";position:absolute;right:7px;top:65px;color:var(--sm);font-family:var(--font-sans);}
+.system-map span,.rule-grid span,.layer-id span{font-family:var(--font-sans);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--sm);}
+.system-map h3{font-size:18px;line-height:1.15;margin:13px 20px 6px 0;}
+.system-map p{font-family:var(--font-sans);font-size:12px;line-height:1.4;color:var(--muted);margin:0 20px 0 0;}
+.layer-list{border-top:1px solid var(--rule);margin-top:30px;}
+.layer-row{display:grid;grid-template-columns:150px 1fr 1fr;gap:30px;padding:24px 0;border-bottom:1px solid var(--rule);}
+.layer-row h3{font-family:var(--font-sans);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 6px;}
+.layer-row p{font-size:15px;color:var(--ink-2);line-height:1.48;margin:0;}
+.layer-id b{display:block;font-size:22px;margin-top:3px;}
+.runbook{list-style:none;margin:30px 0 0;padding:0;border-top:1px solid var(--rule);}
+.runbook li{display:grid;grid-template-columns:52px 1fr;padding:18px 0;border-bottom:1px solid var(--rule);}
+.runbook>li>span{font-family:var(--font-sans);font-size:11px;color:var(--sm);padding-top:4px;}
+.runbook b{display:inline-block;min-width:210px;font-size:17px;}
+.runbook code{font-size:12px;}.runbook p{display:inline;color:var(--muted);font-size:14px;margin-left:18px;}
+.rule-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);margin-top:30px;border:1px solid var(--rule);}
+.rule-grid article{background:var(--paper);padding:24px;}
+.rule-grid h3{font-size:22px;margin:5px 0 8px;}.rule-grid p{font-size:15px;line-height:1.5;color:var(--ink-2);margin:0;}
+.quality-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:30px;}
+.quality-grid h3{font-size:18px;margin:0 0 8px;}.quality-grid p{font-size:15px;color:var(--ink-2);line-height:1.5;margin:0;}
 .method-note{border-left:2px solid var(--sm);padding-left:14px;font-size:15px;color:var(--ink-2);line-height:1.5;margin:30px 0 0;}
 
 /* footer */
@@ -158,25 +175,36 @@ thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
 .foot-notes p{font-size:15px;color:var(--ink-2);line-height:1.5;margin:0;max-width:66ch;}
 .foot-meta{display:flex;flex-direction:column;gap:3px;margin-top:22px;font-family:var(--font-sans);font-size:11.5px;color:var(--muted);}
 
-@media (max-width:560px){ .paper{padding:44px 18px 56px;} body{font-size:17px;} .pipeline{grid-template-columns:1fr 1fr;} .pipeline div:nth-child(2)::after{display:none;} }
+@media (max-width:760px){
+  .site-nav-inner{padding:9px 18px;align-items:flex-start;}.site-brand{display:none}.site-links{width:100%;justify-content:space-between;gap:14px;}
+  .paper{padding:44px 18px 56px;} body{font-size:17px;}
+  .theme-btn{position:static;margin-top:18px;}
+  .system-map{grid-template-columns:1fr 1fr;}.system-map article{min-height:125px}.system-map article:nth-child(2)::after,.system-map article:nth-child(4)::after{display:none;}
+  .layer-row{grid-template-columns:1fr;gap:12px}.layer-row>div:not(.layer-id){padding-left:18px;border-left:1px solid var(--rule);}
+  .runbook b{display:block;min-width:0}.runbook code{display:block;margin:2px 0 5px}.runbook p{display:block;margin:0;}
+  .rule-grid,.quality-grid{grid-template-columns:1fr}.quality-grid{gap:24px}
+}
 @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
 
 </style>
-<div class="paper">
+<nav class="site-nav" aria-label="Navegação principal">
+  <div class="site-nav-inner">
+    <a class="site-brand" href="dashboard.html">Observatório da Educação</a>
+    <div class="site-links">
+      <a href="dashboard.html" data-page="analise" aria-current="page">Análise</a>
+      <a href="arquitetura.html" data-page="arquitetura">Arquitetura e metodologia</a>
+    </div>
+  </div>
+</nav><main class="paper">
 
   <header class="masthead">
-    <p class="kicker">Observatório da educação básica · rede pública · Santa Maria / RS</p>
+    <p class="kicker">Observatório da educação básica · indicadores oficiais · Santa Maria / RS</p>
     <h1 class="headline">Santa Maria começa forte<br>e vai perdendo o passo</h1>
     <p class="standfirst">Nos anos iniciais, a cidade acompanha o Brasil e o Rio Grande do Sul.
       Aí o caminho encompridado revela suas rachaduras: o atraso se acumula, a aprendizagem
       leva um baque que a aprovação disfarça, e o Ensino Médio vira um abismo. Vinte anos de
       dados oficiais do INEP, lidos de ponta a ponta.</p>
     <button id="theme" class="theme-btn" type="button" aria-label="Alternar tema">tema</button>
-    <nav class="section-nav" aria-label="Seções do painel">
-      <a href="#analise">Análise</a>
-      <a href="#explorador">Explorador</a>
-      <a href="#metodologia">Arquitetura e metodologia</a>
-    </nav>
   </header>
 
   <!-- HERO: a queda entre etapas -->
@@ -229,8 +257,8 @@ thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
       <h2>No Ensino Médio, o fluxo colapsa.</h2>
       <p>A aprovação que era exemplar no Fundamental (~97%) despenca no Médio: <b>78%</b> em
         Santa Maria contra <b>95%</b> no Brasil. É o retrato do IDEB de EM da cidade caindo de
-        3,1 (2019) para 2,4 (2023). O Médio é rede estadual, não municipal, o que aponta para
-        <i>onde</i> está o problema.</p>
+        3,1 (2019) para 2,4 (2023). A distância para o padrão nacional mostra em qual etapa o
+        percurso local perde mais força.</p>
     </div>
     <figure class="fig" data-chart data-ind="taxa_aprovacao" data-eta="em"
       data-ann='[{"niv":"santa_maria","ano":2022,"text":"78%, abaixo de todas as referências","ty":72,"tano":2018},{"niv":"brasil","ano":2025,"text":"Brasil: 95%","ty":90,"tano":2021}]'></figure>
@@ -258,8 +286,8 @@ thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
     <p class="explore-lede">Escolha o indicador e a etapa. Santa Maria em destaque; Brasil (cinza
       cheio) e RS (cinza tracejado) como referência. Passe o mouse para os valores.</p>
     <div class="controls">
-      <div class="ctl"><span class="ctl-lbl">Indicador</span><div id="ind-pills" class="pills" role="tablist"></div></div>
-      <div class="ctl"><span class="ctl-lbl">Etapa</span><div id="eta-pills" class="pills" role="tablist"></div></div>
+      <div class="ctl"><span class="ctl-lbl">Indicador</span><div id="ind-pills" class="pills"></div></div>
+      <div class="ctl"><span class="ctl-lbl">Etapa</span><div id="eta-pills" class="pills"></div></div>
     </div>
     <div class="chart-head">
       <h3 id="ex-title">—</h3>
@@ -272,64 +300,6 @@ thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
     </figure>
     <div id="ex-legend" class="legend"></div>
     <div id="ex-table" class="table-wrap" hidden></div>
-  </section>
-
-  <div class="rule"></div>
-
-  <section class="method" id="metodologia">
-    <p class="act-num">Por trás do painel</p>
-    <h2>Arquitetura e metodologia</h2>
-    <p class="method-lede">Este painel é a última camada de um pipeline reproduzível. O dado
-      público do INEP chega pela Base dos Dados no BigQuery, passa por tratamento e testes e só
-      então vira análise visual.</p>
-
-    <div class="pipeline" aria-label="Fluxo do pipeline de dados">
-      <div><span>Fonte</span><b>INEP via Base dos Dados</b><small>consultas no BigQuery</small></div>
-      <div><span>Bronze</span><b>Parquet local</b><small>extração preservada</small></div>
-      <div><span>Silver e gold</span><b>dbt e DuckDB</b><small>limpeza, modelo e testes</small></div>
-      <div><span>Visualização</span><b>HTML e gráficos</b><small>painel editorial</small></div>
-    </div>
-
-    <div class="method-block">
-      <h3>Como os dados chegam</h3>
-      <p>As tabelas harmonizadas da Base dos Dados dão acesso, pelo BigQuery, aos indicadores
-        publicados pelo INEP. A ingestão em Python consulta os recortes de Santa Maria, Rio
-        Grande do Sul e Brasil e grava arquivos Parquet na camada bronze. Essa cópia mantém a
-        extração separada das decisões analíticas e permite repetir as etapas seguintes sem
-        consultar a origem a cada execução.</p>
-    </div>
-
-    <div class="method-block">
-      <h3>Como o pipeline é construído</h3>
-      <p>O projeto segue a arquitetura medalhão. A bronze guarda o dado extraído. Na silver, os
-        modelos de staging do dbt padronizam nomes, tipos e recortes e aplicam a curadoria. Na
-        gold, <code>fct_indicadores</code> reúne uma linha por indicador, nível, etapa, ano e
-        valor. O DuckDB executa os modelos localmente. Depois, o pipeline gera os gráficos e
-        este HTML autocontido.</p>
-      <p><code>run_pipeline.py</code> encadeia ingestão, <code>dbt build</code>, gráficos e painel.
-        As etapas são idempotentes: uma nova execução recompõe os produtos a partir das mesmas
-        regras. Código, modelos dbt, testes, documentação e saídas visuais são versionados no
-        Git, o que deixa cada mudança rastreável.</p>
-    </div>
-
-    <div class="method-block">
-      <h3>Regras de cálculo e curadoria</h3>
-      <ul>
-        <li><b>IDEB:</b> combina proficiência no SAEB e rendimento escolar. Por isso o painel
-          mostra as notas de Matemática e Língua Portuguesa separadas da aprovação.</li>
-        <li><b>Aprovação:</b> valores fora do intervalo de 40% a 100% são descartados. O filtro
-          retira pontos incompatíveis com uma taxa válida.</li>
-        <li><b>Distorção idade-série:</b> aparece apenas nos anos finais do Ensino Fundamental,
-          único recorte que permaneceu consistente na auditoria célula a célula.</li>
-        <li><b>Regra das séries:</b> uma etapa entra no gráfico quando pelo menos dois níveis têm
-          cinco ou mais anos válidos. Apenas as séries que atendem ao critério são desenhadas.</li>
-      </ul>
-    </div>
-
-    <p class="method-note">A auditoria encontrou valores corrompidos na camada harmonizada da
-      Base dos Dados, não na publicação oficial do INEP. A integração direta dos arquivos
-      públicos do instituto é uma evolução planejada. Até lá, o painel mantém a fonte
-      harmonizada com filtros explícitos, exclusões documentadas e testes versionados.</p>
   </section>
 
   <footer class="foot">
@@ -346,10 +316,10 @@ thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
     <div class="foot-meta">
       <span>Fonte: INEP · <code>br_inep_ideb</code>, <code>br_inep_indicadores_educacionais</code></span>
       <span>Santa Maria/RS · IBGE <code>4316907</code></span>
-      <span>Rede pública · 2005–2025 · projeto de portfólio de dados</span>
+      <span>IDEB e SAEB: rede pública · demais indicadores: rede total · 2005–2025</span>
     </div>
   </footer>
-</div>
+</main>
 
 <script>
 const DATA = {"distorcao_idade_serie":{"ef_anos_finais":{"brasil":[[2006,35.4],[2007,34.0],[2008,27.4],[2009,28.9],[2010,29.6],[2011,28.8],[2012,28.2],[2013,27.5],[2014,27.3],[2015,26.8],[2016,26.3],[2017,25.9],[2018,24.7],[2019,23.4],[2020,22.7],[2021,21.0],[2022,18.5],[2023,17.0],[2024,15.7],[2025,14.4]],"rs":[[2023,22.4],[2024,17.9]],"santa_maria":[[2006,25.3],[2007,24.9],[2008,24.5],[2009,25.6],[2010,26.0],[2011,26.3],[2012,28.0],[2013,28.3],[2014,29.6],[2015,30.0],[2016,28.9],[2017,29.1],[2018,28.6],[2019,28.7],[2020,28.4],[2021,25.8],[2022,21.6],[2023,20.6],[2024,19.8]]}},"ideb":{"ef_anos_finais":{"brasil":[[2005,3.2],[2007,3.5],[2009,3.7],[2011,3.9],[2013,4.0],[2015,4.2],[2017,4.4],[2019,4.6],[2021,4.9],[2023,4.7]],"rs":[[2005,3.6],[2007,3.7],[2009,3.9],[2011,3.9],[2013,4.0],[2015,4.2],[2017,4.4],[2019,4.5],[2021,5.0],[2023,4.7]],"santa_maria":[[2005,3.7],[2007,3.8],[2009,4.0],[2011,4.0],[2013,4.1],[2017,4.6],[2019,4.5],[2021,5.1],[2023,4.6]]},"ef_anos_iniciais":{"brasil":[[2005,3.6],[2007,4.0],[2009,4.4],[2011,4.7],[2013,4.9],[2015,5.3],[2017,5.5],[2019,5.7],[2021,5.5],[2023,5.7]],"rs":[[2005,4.1],[2007,4.5],[2009,4.7],[2011,5.1],[2013,5.4],[2015,5.5],[2017,5.6],[2019,5.8],[2021,5.8],[2023,5.8]],"santa_maria":[[2005,4.3],[2007,4.4],[2009,4.5],[2011,5.0],[2013,5.5],[2017,5.7],[2019,5.7],[2021,5.7],[2023,5.8]]},"em":{"brasil":[[2005,3.1],[2007,3.2],[2009,3.4],[2011,3.4],[2013,3.4],[2015,3.5],[2017,3.5],[2019,3.9],[2021,3.9],[2023,4.1]],"santa_maria":[[2019,3.1],[2023,2.4]]}},"saeb_lingua_portuguesa":{"ef_anos_finais":{"brasil":[[2005,225.4],[2007,228.9],[2009,238.7],[2011,238.8],[2013,239.4],[2015,247.3],[2017,253.8],[2019,255.7],[2021,254.9],[2023,254.6]],"rs":[[2005,239.5],[2007,239.1],[2009,249.5],[2011,247.3],[2013,248.7],[2015,254.6],[2017,262.5],[2019,263.3],[2021,260.6],[2023,260.0]],"santa_maria":[[2005,238.6],[2007,244.8],[2009,257.2],[2011,253.2],[2013,256.3],[2017,273.3],[2019,269.5],[2021,259.9],[2023,262.2]]},"ef_anos_iniciais":{"brasil":[[2005,167.6],[2007,171.4],[2009,179.6],[2011,185.7],[2013,189.7],[2015,202.3],[2017,209.2],[2019,209.1],[2021,201.4],[2023,207.6]],"rs":[[2005,177.1],[2007,179.9],[2009,187.5],[2011,193.9],[2013,201.7],[2015,208.3],[2017,213.8],[2019,216.8],[2021,210.9],[2023,212.9]],"santa_maria":[[2005,186.2],[2007,181.3],[2009,184.7],[2011,194.3],[2013,206.0],[2017,216.6],[2019,216.4],[2021,206.1],[2023,214.8]]},"em":{"brasil":[[2005,249.3],[2007,254.1],[2009,262.2],[2011,261.4],[2013,256.6],[2015,260.9],[2017,260.4],[2019,272.3],[2021,269.8],[2023,270.2]],"santa_maria":[[2019,299.7],[2023,297.7]]}},"saeb_matematica":{"ef_anos_finais":{"brasil":[[2005,231.6],[2007,240.6],[2009,241.8],[2011,244.8],[2013,243.8],[2015,250.6],[2017,252.0],[2019,257.2],[2021,252.0],[2023,251.3]],"rs":[[2005,252.7],[2007,251.4],[2009,257.0],[2011,257.5],[2013,254.1],[2015,256.9],[2017,261.6],[2019,264.0],[2021,257.6],[2023,255.1]],"santa_maria":[[2005,256.6],[2007,258.1],[2009,264.6],[2011,261.6],[2013,262.7],[2017,270.5],[2019,266.8],[2021,256.9],[2023,256.4]]},"ef_anos_iniciais":{"brasil":[[2005,177.1],[2007,189.1],[2009,199.5],[2011,204.6],[2013,205.1],[2015,214.6],[2017,218.6],[2019,222.4],[2021,210.1],[2023,218.3]],"rs":[[2005,187.0],[2007,197.8],[2009,208.0],[2011,212.3],[2013,218.1],[2015,219.5],[2017,222.4],[2019,226.4],[2021,216.8],[2023,222.1]],"santa_maria":[[2005,191.6],[2007,198.4],[2009,202.9],[2011,211.5],[2013,220.1],[2017,223.7],[2019,224.8],[2021,210.2],[2023,221.5]]},"em":{"brasil":[[2005,260.8],[2007,263.7],[2009,265.9],[2011,265.4],[2013,261.1],[2015,260.0],[2017,260.3],[2019,269.0],[2021,262.7],[2023,264.7]],"santa_maria":[[2019,305.1],[2023,292.7]]}},"taxa_aprovacao":{"ef_anos_finais":{"brasil":[[2007,79.8],[2008,79.9],[2011,83.4],[2012,84.1],[2013,85.1],[2014,84.8],[2015,85.7],[2016,85.6],[2017,87.1],[2018,88.1],[2019,89.9],[2020,97.8],[2021,95.7],[2022,92.1],[2023,94.0],[2024,94.1],[2025,96.2]],"rs":[[2011,76.4],[2012,76.9],[2013,78.1],[2014,78.5],[2015,76.0],[2016,77.7],[2017,77.2],[2018,77.4],[2019,82.8],[2020,83.8],[2021,84.8],[2022,86.5],[2024,91.4]],"santa_maria":[[2007,78.3],[2008,77.3],[2009,76.2],[2010,76.0],[2011,78.3],[2012,78.5],[2013,80.3],[2014,79.7],[2015,80.8],[2016,81.5],[2017,82.7],[2018,81.8],[2019,84.2],[2021,97.0],[2022,89.6],[2023,97.5],[2024,97.4]]},"ef_anos_iniciais":{"brasil":[[2007,85.8],[2008,87.0],[2011,91.2],[2012,91.7],[2013,92.7],[2014,92.7],[2015,93.2],[2016,93.2],[2017,94.0],[2018,94.2],[2019,95.1],[2020,98.5],[2021,97.6],[2022,96.0],[2023,97.2],[2024,97.4],[2025,98.3]],"rs":[[2011,94.1],[2012,94.1],[2013,94.9],[2014,94.8],[2015,94.7],[2016,94.7],[2017,94.6],[2018,96.2],[2019,97.7],[2020,97.3],[2021,97.6],[2022,97.4],[2024,96.0]],"santa_maria":[[2007,89.2],[2008,89.9],[2009,89.2],[2010,89.4],[2011,91.5],[2012,94.4],[2013,93.3],[2014,92.6],[2015,92.8],[2016,93.1],[2017,93.6],[2018,93.5],[2019,93.4],[2021,98.8],[2022,94.9],[2023,95.5],[2024,97.5]]},"em":{"brasil":[[2007,74.1],[2008,74.9],[2011,77.4],[2012,78.7],[2013,80.1],[2014,80.3],[2015,81.7],[2016,81.5],[2017,83.1],[2018,83.4],[2019,86.1],[2020,95.0],[2021,90.8],[2022,86.6],[2023,91.3],[2024,91.7],[2025,94.8]],"rs":[[2024,85.5]],"santa_maria":[[2007,64.5],[2008,63.1],[2009,63.8],[2010,63.2],[2011,65.6],[2012,68.8],[2013,74.5],[2014,72.4],[2015,74.1],[2016,72.4],[2017,71.5],[2018,70.8],[2019,78.6],[2021,90.0],[2022,78.2]]}}};
@@ -370,6 +340,7 @@ const NIV = {
   rs:         {label:"Rio Grande do Sul", cls:"rs"},
 };
 const NIV_ORDER = ["santa_maria","brasil","rs"];  // protagonista primeiro; contexto depois
+const MIN_POINTS = 5;
 
 const NS = "http://www.w3.org/2000/svg";
 const fmt = n => n.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
@@ -378,9 +349,12 @@ const el = (t,a) => { const e=document.createElementNS(NS,t); for(const k in a) 
 
 function seriesFor(ind, eta){
   const d = (DATA[ind]||{})[eta] || {};
-  return NIV_ORDER.filter(n => d[n] && d[n].length).map(n => ({niv:n, pts:d[n]}));
+  return NIV_ORDER.filter(n => d[n] && d[n].length >= MIN_POINTS).map(n => ({niv:n, pts:d[n]}));
 }
-function etapasFor(ind){ return ETA_ORDER.filter(e => DATA[ind] && DATA[ind][e]); }
+function etapasFor(ind){
+  return ETA_ORDER.filter(e => DATA[ind] && DATA[ind][e] &&
+    NIV_ORDER.filter(n => (DATA[ind][e][n]||[]).length >= MIN_POINTS).length >= 2);
+}
 function valAt(pts, ano){ const h = pts.find(p=>p[0]===ano); return h?h[1]:null; }
 
 // ---- scales ----------------------------------------------------------------
@@ -524,6 +498,7 @@ function drawTrajectory(){
 function drawNarrative(){
   document.querySelectorAll("[data-chart]").forEach(fig=>{
     const svg=fig.querySelector("svg") || (()=>{const s=el("svg",{viewBox:`0 0 ${CW} ${CHH}`}); s.setAttribute("role","img"); fig.appendChild(s); return s;})();
+    svg.setAttribute("aria-label",`${IND[fig.dataset.ind].label}, ${ETA[fig.dataset.eta]}. Série temporal comparando os níveis disponíveis.`);
     const ann=fig.dataset.ann?JSON.parse(fig.dataset.ann):[];
     drawSeries(svg, fig, fig.dataset.ind, fig.dataset.eta, {ann, hover:true});
   });
@@ -535,20 +510,20 @@ let tableOpen=false;
 function buildPills(){
   const ip=document.getElementById("ind-pills"); ip.innerHTML="";
   IND_ORDER.forEach(ind=>{ const b=document.createElement("button"); b.className="pill"; b.type="button"; b.textContent=IND[ind].label;
-    b.dataset.ind=ind; b.setAttribute("role","tab");
+    b.dataset.ind=ind;
     b.onclick=()=>{ state.ind=ind; if(!etapasFor(ind).includes(state.eta)) state.eta=etapasFor(ind)[0]; renderEx(); };
     ip.appendChild(b); });
 }
 function buildEtapa(){
   const ep=document.getElementById("eta-pills"); ep.innerHTML=""; const avail=etapasFor(state.ind);
   ETA_ORDER.forEach(eta=>{ const b=document.createElement("button"); b.className="pill"; b.type="button"; b.textContent=ETA[eta];
-    b.dataset.eta=eta; b.setAttribute("role","tab"); b.disabled=!avail.includes(eta);
+    b.dataset.eta=eta; b.disabled=!avail.includes(eta);
     if(avail.includes(eta)) b.onclick=()=>{state.eta=eta; renderEx();};
     ep.appendChild(b); });
 }
 function syncPills(){
-  document.querySelectorAll("#ind-pills .pill").forEach(b=>b.setAttribute("aria-selected",b.dataset.ind===state.ind));
-  document.querySelectorAll("#eta-pills .pill").forEach(b=>b.setAttribute("aria-selected",b.dataset.eta===state.eta));
+  document.querySelectorAll("#ind-pills .pill").forEach(b=>b.setAttribute("aria-pressed",b.dataset.ind===state.ind));
+  document.querySelectorAll("#eta-pills .pill").forEach(b=>b.setAttribute("aria-pressed",b.dataset.eta===state.eta));
 }
 function drawLegend(){
   const lg=document.getElementById("ex-legend"); lg.innerHTML="";
@@ -559,7 +534,7 @@ function drawTable(){
   const wrap=document.getElementById("ex-table"); const series=seriesFor(state.ind,state.eta);
   const years=[...new Set(series.flatMap(s=>s.pts.map(p=>p[0])))].sort((a,b)=>a-b);
   const map={}; series.forEach(s=>map[s.niv]=Object.fromEntries(s.pts));
-  let h=`<table><thead><tr><th>Ano</th>${series.map(s=>`<th>${NIV[s.niv].label}</th>`).join("")}</tr></thead><tbody>`;
+  let h=`<table><caption>${IND[state.ind].label}, ${ETA[state.eta]}</caption><thead><tr><th scope="col">Ano</th>${series.map(s=>`<th scope="col">${NIV[s.niv].label}</th>`).join("")}</tr></thead><tbody>`;
   years.forEach(y=>{ h+=`<tr><td>${y}</td>${series.map(s=>`<td>${map[s.niv][y]!=null?fmt(map[s.niv][y]):"—"}</td>`).join("")}</tr>`; });
   wrap.innerHTML=h+"</tbody></table>";
 }
@@ -579,7 +554,8 @@ function renderEx(){
 function initTheme(){
   const root=document.documentElement;
   const cur=()=>root.getAttribute("data-theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
-  document.getElementById("theme").onclick=()=>root.setAttribute("data-theme",cur()==="dark"?"light":"dark");
+  const button=document.getElementById("theme");
+  button.onclick=()=>{const next=cur()==="dark"?"light":"dark";root.setAttribute("data-theme",next);button.setAttribute("aria-pressed",next==="dark");};
 }
 
 // ---- boot ------------------------------------------------------------------

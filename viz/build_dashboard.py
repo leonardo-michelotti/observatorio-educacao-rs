@@ -17,6 +17,8 @@ ROOT = Path(__file__).resolve().parent.parent
 DB = ROOT / "data" / "educacao.duckdb"
 OUT = ROOT / "viz" / "dashboard.html"          # versão p/ o Artifact (só conteúdo)
 PUB = ROOT / "public" / "index.html"           # versão standalone p/ web/Railway
+ARCH_OUT = ROOT / "viz" / "arquitetura.html"
+ARCH_PUB = ROOT / "public" / "arquitetura.html"
 
 
 def load_nested():
@@ -38,21 +40,27 @@ def load_nested():
     return nested
 
 
-HTML = r"""<div class="paper">
+SITE_NAV = r"""<nav class="site-nav" aria-label="Navegação principal">
+  <div class="site-nav-inner">
+    <a class="site-brand" href="index.html">Observatório da Educação</a>
+    <div class="site-links">
+      <a href="index.html" data-page="analise">Análise</a>
+      <a href="arquitetura.html" data-page="arquitetura">Arquitetura e metodologia</a>
+    </div>
+  </div>
+</nav>"""
+
+
+HTML = r"""<main class="paper">
 
   <header class="masthead">
-    <p class="kicker">Observatório da educação básica · rede pública · Santa Maria / RS</p>
+    <p class="kicker">Observatório da educação básica · indicadores oficiais · Santa Maria / RS</p>
     <h1 class="headline">Santa Maria começa forte<br>e vai perdendo o passo</h1>
     <p class="standfirst">Nos anos iniciais, a cidade acompanha o Brasil e o Rio Grande do Sul.
       Aí o caminho encompridado revela suas rachaduras: o atraso se acumula, a aprendizagem
       leva um baque que a aprovação disfarça, e o Ensino Médio vira um abismo. Vinte anos de
       dados oficiais do INEP, lidos de ponta a ponta.</p>
     <button id="theme" class="theme-btn" type="button" aria-label="Alternar tema">tema</button>
-    <nav class="section-nav" aria-label="Seções do painel">
-      <a href="#analise">Análise</a>
-      <a href="#explorador">Explorador</a>
-      <a href="#metodologia">Arquitetura e metodologia</a>
-    </nav>
   </header>
 
   <!-- HERO: a queda entre etapas -->
@@ -105,8 +113,8 @@ HTML = r"""<div class="paper">
       <h2>No Ensino Médio, o fluxo colapsa.</h2>
       <p>A aprovação que era exemplar no Fundamental (~97%) despenca no Médio: <b>78%</b> em
         Santa Maria contra <b>95%</b> no Brasil. É o retrato do IDEB de EM da cidade caindo de
-        3,1 (2019) para 2,4 (2023). O Médio é rede estadual, não municipal, o que aponta para
-        <i>onde</i> está o problema.</p>
+        3,1 (2019) para 2,4 (2023). A distância para o padrão nacional mostra em qual etapa o
+        percurso local perde mais força.</p>
     </div>
     <figure class="fig" data-chart data-ind="taxa_aprovacao" data-eta="em"
       data-ann='[{"niv":"santa_maria","ano":2022,"text":"78%, abaixo de todas as referências","ty":72,"tano":2018},{"niv":"brasil","ano":2025,"text":"Brasil: 95%","ty":90,"tano":2021}]'></figure>
@@ -134,8 +142,8 @@ HTML = r"""<div class="paper">
     <p class="explore-lede">Escolha o indicador e a etapa. Santa Maria em destaque; Brasil (cinza
       cheio) e RS (cinza tracejado) como referência. Passe o mouse para os valores.</p>
     <div class="controls">
-      <div class="ctl"><span class="ctl-lbl">Indicador</span><div id="ind-pills" class="pills" role="tablist"></div></div>
-      <div class="ctl"><span class="ctl-lbl">Etapa</span><div id="eta-pills" class="pills" role="tablist"></div></div>
+      <div class="ctl"><span class="ctl-lbl">Indicador</span><div id="ind-pills" class="pills"></div></div>
+      <div class="ctl"><span class="ctl-lbl">Etapa</span><div id="eta-pills" class="pills"></div></div>
     </div>
     <div class="chart-head">
       <h3 id="ex-title">—</h3>
@@ -148,64 +156,6 @@ HTML = r"""<div class="paper">
     </figure>
     <div id="ex-legend" class="legend"></div>
     <div id="ex-table" class="table-wrap" hidden></div>
-  </section>
-
-  <div class="rule"></div>
-
-  <section class="method" id="metodologia">
-    <p class="act-num">Por trás do painel</p>
-    <h2>Arquitetura e metodologia</h2>
-    <p class="method-lede">Este painel é a última camada de um pipeline reproduzível. O dado
-      público do INEP chega pela Base dos Dados no BigQuery, passa por tratamento e testes e só
-      então vira análise visual.</p>
-
-    <div class="pipeline" aria-label="Fluxo do pipeline de dados">
-      <div><span>Fonte</span><b>INEP via Base dos Dados</b><small>consultas no BigQuery</small></div>
-      <div><span>Bronze</span><b>Parquet local</b><small>extração preservada</small></div>
-      <div><span>Silver e gold</span><b>dbt e DuckDB</b><small>limpeza, modelo e testes</small></div>
-      <div><span>Visualização</span><b>HTML e gráficos</b><small>painel editorial</small></div>
-    </div>
-
-    <div class="method-block">
-      <h3>Como os dados chegam</h3>
-      <p>As tabelas harmonizadas da Base dos Dados dão acesso, pelo BigQuery, aos indicadores
-        publicados pelo INEP. A ingestão em Python consulta os recortes de Santa Maria, Rio
-        Grande do Sul e Brasil e grava arquivos Parquet na camada bronze. Essa cópia mantém a
-        extração separada das decisões analíticas e permite repetir as etapas seguintes sem
-        consultar a origem a cada execução.</p>
-    </div>
-
-    <div class="method-block">
-      <h3>Como o pipeline é construído</h3>
-      <p>O projeto segue a arquitetura medalhão. A bronze guarda o dado extraído. Na silver, os
-        modelos de staging do dbt padronizam nomes, tipos e recortes e aplicam a curadoria. Na
-        gold, <code>fct_indicadores</code> reúne uma linha por indicador, nível, etapa, ano e
-        valor. O DuckDB executa os modelos localmente. Depois, o pipeline gera os gráficos e
-        este HTML autocontido.</p>
-      <p><code>run_pipeline.py</code> encadeia ingestão, <code>dbt build</code>, gráficos e painel.
-        As etapas são idempotentes: uma nova execução recompõe os produtos a partir das mesmas
-        regras. Código, modelos dbt, testes, documentação e saídas visuais são versionados no
-        Git, o que deixa cada mudança rastreável.</p>
-    </div>
-
-    <div class="method-block">
-      <h3>Regras de cálculo e curadoria</h3>
-      <ul>
-        <li><b>IDEB:</b> combina proficiência no SAEB e rendimento escolar. Por isso o painel
-          mostra as notas de Matemática e Língua Portuguesa separadas da aprovação.</li>
-        <li><b>Aprovação:</b> valores fora do intervalo de 40% a 100% são descartados. O filtro
-          retira pontos incompatíveis com uma taxa válida.</li>
-        <li><b>Distorção idade-série:</b> aparece apenas nos anos finais do Ensino Fundamental,
-          único recorte que permaneceu consistente na auditoria célula a célula.</li>
-        <li><b>Regra das séries:</b> uma etapa entra no gráfico quando pelo menos dois níveis têm
-          cinco ou mais anos válidos. Apenas as séries que atendem ao critério são desenhadas.</li>
-      </ul>
-    </div>
-
-    <p class="method-note">A auditoria encontrou valores corrompidos na camada harmonizada da
-      Base dos Dados, não na publicação oficial do INEP. A integração direta dos arquivos
-      públicos do instituto é uma evolução planejada. Até lá, o painel mantém a fonte
-      harmonizada com filtros explícitos, exclusões documentadas e testes versionados.</p>
   </section>
 
   <footer class="foot">
@@ -222,10 +172,10 @@ HTML = r"""<div class="paper">
     <div class="foot-meta">
       <span>Fonte: INEP · <code>br_inep_ideb</code>, <code>br_inep_indicadores_educacionais</code></span>
       <span>Santa Maria/RS · IBGE <code>4316907</code></span>
-      <span>Rede pública · 2005–2025 · projeto de portfólio de dados</span>
+      <span>IDEB e SAEB: rede pública · demais indicadores: rede total · 2005–2025</span>
     </div>
   </footer>
-</div>
+</main>
 
 <script>
 const DATA = __DATA__;
@@ -246,6 +196,7 @@ const NIV = {
   rs:         {label:"Rio Grande do Sul", cls:"rs"},
 };
 const NIV_ORDER = ["santa_maria","brasil","rs"];  // protagonista primeiro; contexto depois
+const MIN_POINTS = 5;
 
 const NS = "http://www.w3.org/2000/svg";
 const fmt = n => n.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
@@ -254,9 +205,12 @@ const el = (t,a) => { const e=document.createElementNS(NS,t); for(const k in a) 
 
 function seriesFor(ind, eta){
   const d = (DATA[ind]||{})[eta] || {};
-  return NIV_ORDER.filter(n => d[n] && d[n].length).map(n => ({niv:n, pts:d[n]}));
+  return NIV_ORDER.filter(n => d[n] && d[n].length >= MIN_POINTS).map(n => ({niv:n, pts:d[n]}));
 }
-function etapasFor(ind){ return ETA_ORDER.filter(e => DATA[ind] && DATA[ind][e]); }
+function etapasFor(ind){
+  return ETA_ORDER.filter(e => DATA[ind] && DATA[ind][e] &&
+    NIV_ORDER.filter(n => (DATA[ind][e][n]||[]).length >= MIN_POINTS).length >= 2);
+}
 function valAt(pts, ano){ const h = pts.find(p=>p[0]===ano); return h?h[1]:null; }
 
 // ---- scales ----------------------------------------------------------------
@@ -400,6 +354,7 @@ function drawTrajectory(){
 function drawNarrative(){
   document.querySelectorAll("[data-chart]").forEach(fig=>{
     const svg=fig.querySelector("svg") || (()=>{const s=el("svg",{viewBox:`0 0 ${CW} ${CHH}`}); s.setAttribute("role","img"); fig.appendChild(s); return s;})();
+    svg.setAttribute("aria-label",`${IND[fig.dataset.ind].label}, ${ETA[fig.dataset.eta]}. Série temporal comparando os níveis disponíveis.`);
     const ann=fig.dataset.ann?JSON.parse(fig.dataset.ann):[];
     drawSeries(svg, fig, fig.dataset.ind, fig.dataset.eta, {ann, hover:true});
   });
@@ -411,20 +366,20 @@ let tableOpen=false;
 function buildPills(){
   const ip=document.getElementById("ind-pills"); ip.innerHTML="";
   IND_ORDER.forEach(ind=>{ const b=document.createElement("button"); b.className="pill"; b.type="button"; b.textContent=IND[ind].label;
-    b.dataset.ind=ind; b.setAttribute("role","tab");
+    b.dataset.ind=ind;
     b.onclick=()=>{ state.ind=ind; if(!etapasFor(ind).includes(state.eta)) state.eta=etapasFor(ind)[0]; renderEx(); };
     ip.appendChild(b); });
 }
 function buildEtapa(){
   const ep=document.getElementById("eta-pills"); ep.innerHTML=""; const avail=etapasFor(state.ind);
   ETA_ORDER.forEach(eta=>{ const b=document.createElement("button"); b.className="pill"; b.type="button"; b.textContent=ETA[eta];
-    b.dataset.eta=eta; b.setAttribute("role","tab"); b.disabled=!avail.includes(eta);
+    b.dataset.eta=eta; b.disabled=!avail.includes(eta);
     if(avail.includes(eta)) b.onclick=()=>{state.eta=eta; renderEx();};
     ep.appendChild(b); });
 }
 function syncPills(){
-  document.querySelectorAll("#ind-pills .pill").forEach(b=>b.setAttribute("aria-selected",b.dataset.ind===state.ind));
-  document.querySelectorAll("#eta-pills .pill").forEach(b=>b.setAttribute("aria-selected",b.dataset.eta===state.eta));
+  document.querySelectorAll("#ind-pills .pill").forEach(b=>b.setAttribute("aria-pressed",b.dataset.ind===state.ind));
+  document.querySelectorAll("#eta-pills .pill").forEach(b=>b.setAttribute("aria-pressed",b.dataset.eta===state.eta));
 }
 function drawLegend(){
   const lg=document.getElementById("ex-legend"); lg.innerHTML="";
@@ -435,7 +390,7 @@ function drawTable(){
   const wrap=document.getElementById("ex-table"); const series=seriesFor(state.ind,state.eta);
   const years=[...new Set(series.flatMap(s=>s.pts.map(p=>p[0])))].sort((a,b)=>a-b);
   const map={}; series.forEach(s=>map[s.niv]=Object.fromEntries(s.pts));
-  let h=`<table><thead><tr><th>Ano</th>${series.map(s=>`<th>${NIV[s.niv].label}</th>`).join("")}</tr></thead><tbody>`;
+  let h=`<table><caption>${IND[state.ind].label}, ${ETA[state.eta]}</caption><thead><tr><th scope="col">Ano</th>${series.map(s=>`<th scope="col">${NIV[s.niv].label}</th>`).join("")}</tr></thead><tbody>`;
   years.forEach(y=>{ h+=`<tr><td>${y}</td>${series.map(s=>`<td>${map[s.niv][y]!=null?fmt(map[s.niv][y]):"—"}</td>`).join("")}</tr>`; });
   wrap.innerHTML=h+"</tbody></table>";
 }
@@ -455,7 +410,8 @@ function renderEx(){
 function initTheme(){
   const root=document.documentElement;
   const cur=()=>root.getAttribute("data-theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
-  document.getElementById("theme").onclick=()=>root.setAttribute("data-theme",cur()==="dark"?"light":"dark");
+  const button=document.getElementById("theme");
+  button.onclick=()=>{const next=cur()==="dark"?"light":"dark";root.setAttribute("data-theme",next);button.setAttribute("aria-pressed",next==="dark");};
 }
 
 // ---- boot ------------------------------------------------------------------
@@ -468,6 +424,84 @@ document.getElementById("view-toggle").onclick=()=>{tableOpen=!tableOpen; render
 addEventListener("resize",()=>{ drawTrajectory(); drawNarrative(); if(!tableOpen) renderEx(); });
 </script>
 """
+
+ARCH_HTML = r"""<main class="paper architecture">
+  <header class="arch-head">
+    <p class="kicker">Engenharia de dados · decisões reproduzíveis</p>
+    <h1 class="headline">Arquitetura<br>e metodologia</h1>
+    <p class="standfirst">Do dado público do INEP à narrativa visual. Esta página abre as
+      camadas do projeto, mostra onde cada decisão acontece e registra o que entra, o que fica
+      de fora e por quê.</p>
+    <button id="theme" class="theme-btn" type="button" aria-label="Alternar tema" aria-pressed="false">tema</button>
+  </header>
+
+  <section class="arch-section">
+    <p class="act-num">Visão do sistema</p>
+    <h2>Um caminho único, com responsabilidades separadas.</h2>
+    <p class="section-lede">A arquitetura medalhão é lógica: bronze, staging e mart vivem no
+      mesmo projeto local, mas cada camada tem um contrato diferente.</p>
+    <div class="system-map" role="img" aria-label="Fluxo dos dados do INEP até o painel">
+      <article><span>01 · Origem</span><h3>INEP</h3><p>Indicadores públicos oficiais</p></article>
+      <article><span>02 · Acesso</span><h3>Base dos Dados</h3><p>Tabelas no BigQuery</p></article>
+      <article><span>03 · Bronze</span><h3>Parquet</h3><p>Extração local preservada</p></article>
+      <article><span>04 · Silver e gold</span><h3>dbt + DuckDB</h3><p>Curadoria, modelo e testes</p></article>
+      <article><span>05 · Produto</span><h3>PNG + HTML</h3><p>Narrativa e explorador</p></article>
+    </div>
+  </section>
+
+  <section class="arch-section">
+    <p class="act-num">Responsabilidade por camada</p>
+    <h2>O dado muda de papel, não apenas de formato.</h2>
+    <div class="layer-list">
+      <article class="layer-row"><div class="layer-id"><span>Fonte</span><b>INEP</b></div><div><h3>O que representa</h3><p>Publicações oficiais de IDEB, SAEB, rendimento e indicadores educacionais.</p></div><div><h3>Como acessamos</h3><p>A Base dos Dados harmoniza as tabelas e as disponibiliza no BigQuery.</p></div></article>
+      <article class="layer-row"><div class="layer-id"><span>Bronze</span><b>Parquet</b></div><div><h3>O que preserva</h3><p>Recortes de Brasil, RS e Santa Maria, separados da lógica analítica.</p></div><div><h3>Contrato</h3><p>A extração é a entrada reproduzível; não recebe regras editoriais.</p></div></article>
+      <article class="layer-row"><div class="layer-id"><span>Silver</span><b>staging</b></div><div><h3>O que transforma</h3><p>Normaliza etapas, tipos e nomes; converte indicadores largos para formato tidy.</p></div><div><h3>Onde há curadoria</h3><p>Filtros e exclusões auditadas ficam explícitos em SQL versionado.</p></div></article>
+      <article class="layer-row"><div class="layer-id"><span>Gold</span><b>mart</b></div><div><h3>O que entrega</h3><p><code>fct_indicadores</code>, uma linha por indicador, nível, etapa, ano e valor.</p></div><div><h3>Quem consome</h3><p>Os geradores de gráficos e do painel leem apenas esse contrato final.</p></div></article>
+    </div>
+  </section>
+
+  <section class="arch-section">
+    <p class="act-num">Orquestração</p>
+    <h2><code>run_pipeline.py</code> encadeia quatro etapas.</h2>
+    <ol class="runbook">
+      <li><span>01</span><div><b>Ingestão</b><code>ingestion/extract_bd.py</code><p>Consulta o BigQuery e grava a bronze.</p></div></li>
+      <li><span>02</span><div><b>Transformação e testes</b><code>dbt build</code><p>Materializa staging e mart no DuckDB.</p></div></li>
+      <li><span>03</span><div><b>Gráficos</b><code>viz/make_charts.py</code><p>Gera os PNGs usados no README.</p></div></li>
+      <li><span>04</span><div><b>Painel</b><code>viz/build_dashboard.py</code><p>Gera as páginas autocontidas para web.</p></div></li>
+    </ol>
+    <p class="method-note">Cada execução recompõe os produtos pelas mesmas regras. Código,
+      SQL, testes, documentação e saídas publicadas são rastreados no Git. O dbt registra a
+      dependência entre modelos por meio de <code>ref()</code>.</p>
+  </section>
+
+  <section class="arch-section">
+    <p class="act-num">Contrato analítico</p>
+    <h2>Quatro regras sustentam o que aparece no painel.</h2>
+    <div class="rule-grid">
+      <article><span>Índice</span><h3>IDEB</h3><p>Combina rendimento com proficiência padronizada a partir do SAEB. Notas por disciplina e aprovação aparecem separadas para revelar os componentes.</p></article>
+      <article><span>Validade</span><h3>Aprovação</h3><p>O pipeline atual mantém valores entre 40% e 100%. A regra trata anomalias conhecidas e permanece documentada como curadoria.</p></article>
+      <article><span>Recorte</span><h3>Distorção idade-série</h3><p>Somente os anos finais do Ensino Fundamental sobreviveram à auditoria célula a célula.</p></article>
+      <article><span>Solidez</span><h3>Séries comparáveis</h3><p>Uma etapa entra quando dois níveis têm cinco ou mais anos válidos. Só os níveis que cumprem o mínimo são desenhados.</p></article>
+    </div>
+  </section>
+
+  <section class="arch-section quality">
+    <p class="act-num">Qualidade e proveniência</p>
+    <h2>A exclusão também é um resultado.</h2>
+    <div class="quality-grid">
+      <div><h3>O que foi encontrado</h3><p>Há valores incompatíveis na harmonização da Base dos Dados. A publicação oficial do INEP é pública e constitui a referência de origem.</p></div>
+      <div><h3>Como o projeto responde</h3><p>Não interpola nem corrige números manualmente. Aplica filtros explícitos, restringe recortes e documenta as séries removidas.</p></div>
+      <div><h3>Próxima evolução</h3><p>Integrar diretamente os arquivos oficiais do INEP e manter a Base dos Dados como camada comparativa de acesso.</p></div>
+    </div>
+  </section>
+
+  <footer class="foot"><div class="foot-meta"><span>Python · BigQuery · Parquet · dbt · DuckDB · Caddy</span><span>Modelos e decisões versionados no repositório</span><a href="index.html">Voltar à análise dos indicadores</a></div></footer>
+</main>
+<script>
+const root=document.documentElement,button=document.getElementById("theme");
+const currentTheme=()=>root.getAttribute("data-theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+button.onclick=()=>{const next=currentTheme()==="dark"?"light":"dark";root.setAttribute("data-theme",next);button.setAttribute("aria-pressed",next==="dark");};
+</script>"""
 
 CSS = r"""
 :root{
@@ -492,6 +526,15 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-se
 b{font-weight:700;} i{font-style:italic;}
 code{font-family:var(--font-sans);font-size:.78em;color:var(--ink-2);letter-spacing:.01em;}
 
+/* persistent site navigation */
+.site-nav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--paper) 94%,transparent);
+  border-bottom:1px solid var(--rule);backdrop-filter:blur(10px);font-family:var(--font-sans);}
+.site-nav-inner{max-width:1040px;margin:0 auto;padding:10px 28px;display:flex;align-items:center;justify-content:space-between;gap:22px;}
+.site-brand{color:var(--ink);font-size:12.5px;font-weight:700;text-decoration:none;white-space:nowrap;}
+.site-links{display:flex;align-items:center;gap:22px;font-size:12.5px;}
+.site-links a{color:var(--muted);text-decoration:none;padding:4px 0;border-bottom:1px solid transparent;}
+.site-links a:hover,.site-links a[aria-current="page"]{color:var(--sm);border-bottom-color:var(--sm);}
+
 /* masthead */
 .masthead{position:relative;border-bottom:2px solid var(--ink);padding-bottom:26px;}
 .kicker{font-family:var(--font-sans);font-size:12.5px;letter-spacing:.02em;color:var(--sm);
@@ -502,9 +545,6 @@ code{font-family:var(--font-sans);font-size:.78em;color:var(--ink-2);letter-spac
 .theme-btn{position:absolute;top:0;right:0;font-family:var(--font-sans);font-size:12px;color:var(--muted);
   background:none;border:1px solid var(--rule);border-radius:2px;padding:4px 9px;cursor:pointer;letter-spacing:.04em;}
 .theme-btn:hover{color:var(--ink);border-color:var(--ink-2);}
-.section-nav{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:24px;font-family:var(--font-sans);font-size:12.5px;}
-.section-nav a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--rule);}
-.section-nav a:hover{color:var(--sm);border-color:var(--sm);}
 
 /* hero */
 .hero{margin:38px 0 8px;}
@@ -583,7 +623,7 @@ code{font-family:var(--font-sans);font-size:.78em;color:var(--ink-2);letter-spac
 .pill{font-family:var(--font-sans);font-size:13.5px;padding:5px 13px;cursor:pointer;border:none;background:none;
   color:var(--muted);border-bottom:2px solid transparent;transition:color .12s,border-color .12s;}
 .pill:hover:not(:disabled){color:var(--ink);}
-.pill[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--sm);font-weight:600;}
+.pill[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--sm);font-weight:600;}
 .pill:disabled{opacity:.32;cursor:not-allowed;}
 .pill:focus-visible,.link-btn:focus-visible,.theme-btn:focus-visible{outline:2px solid var(--sm);outline-offset:2px;}
 .chart-head{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 2px;gap:12px;}
@@ -598,27 +638,38 @@ code{font-family:var(--font-sans);font-size:.78em;color:var(--ink-2);letter-spac
 .sw-rs{background:linear-gradient(90deg,var(--rs) 60%,transparent 60%);background-size:9px 100%;height:3px;}
 .table-wrap{overflow-x:auto;margin-top:12px;}
 table{border-collapse:collapse;width:100%;font-family:var(--font-sans);font-size:13.5px;}
+caption{text-align:left;color:var(--muted);font-size:12px;padding:0 0 8px;}
 th,td{padding:6px 12px;text-align:right;border-bottom:1px solid var(--rule-2);font-variant-numeric:tabular-nums;}
 th:first-child,td:first-child{text-align:left;color:var(--muted);}
 thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
 
-/* architecture and methodology */
-.method{scroll-margin-top:24px;}
-.method h2{font-size:clamp(25px,3.8vw,34px);line-height:1.12;margin:0 0 12px;}
-.method-lede{font-size:18px;color:var(--ink-2);line-height:1.55;margin:0 0 28px;}
-.pipeline{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:0 0 34px;}
-.pipeline div{padding:15px 12px 16px 0;position:relative;}
-.pipeline div:not(:last-child)::after{content:"→";position:absolute;right:5px;top:37px;color:var(--muted);font-family:var(--font-sans);}
-.pipeline span,.pipeline small{display:block;font-family:var(--font-sans);font-size:10.5px;color:var(--muted);line-height:1.35;}
-.pipeline span{text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
-.pipeline b{display:block;font-size:13px;line-height:1.3;margin-bottom:4px;padding-right:12px;}
-.method-block{margin:28px 0;}
-.method-block h3{font-size:20px;margin:0 0 8px;}
-.method-block p,.method-block li{font-size:16px;color:var(--ink-2);line-height:1.55;}
-.method-block p{margin:0 0 10px;}
-.method-block ul{margin:8px 0 0;padding-left:20px;}
-.method-block li{margin:8px 0;padding-left:3px;}
-.method-block li b{color:var(--ink);}
+/* architecture page */
+.architecture{max-width:1040px;}
+.arch-head{position:relative;border-bottom:2px solid var(--ink);padding:0 0 34px;}
+.arch-section{padding:58px 0;border-bottom:1px solid var(--rule);}
+.arch-section h2{font-size:clamp(25px,3.5vw,38px);line-height:1.12;margin:0 0 12px;max-width:22ch;}
+.section-lede{color:var(--ink-2);font-size:17px;max-width:64ch;margin:0 0 28px;}
+.system-map{display:grid;grid-template-columns:repeat(5,1fr);margin-top:32px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);}
+.system-map article{position:relative;padding:18px 20px 20px 0;min-height:150px;}
+.system-map article:not(:last-child)::after{content:"→";position:absolute;right:7px;top:65px;color:var(--sm);font-family:var(--font-sans);}
+.system-map span,.rule-grid span,.layer-id span{font-family:var(--font-sans);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--sm);}
+.system-map h3{font-size:18px;line-height:1.15;margin:13px 20px 6px 0;}
+.system-map p{font-family:var(--font-sans);font-size:12px;line-height:1.4;color:var(--muted);margin:0 20px 0 0;}
+.layer-list{border-top:1px solid var(--rule);margin-top:30px;}
+.layer-row{display:grid;grid-template-columns:150px 1fr 1fr;gap:30px;padding:24px 0;border-bottom:1px solid var(--rule);}
+.layer-row h3{font-family:var(--font-sans);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 6px;}
+.layer-row p{font-size:15px;color:var(--ink-2);line-height:1.48;margin:0;}
+.layer-id b{display:block;font-size:22px;margin-top:3px;}
+.runbook{list-style:none;margin:30px 0 0;padding:0;border-top:1px solid var(--rule);}
+.runbook li{display:grid;grid-template-columns:52px 1fr;padding:18px 0;border-bottom:1px solid var(--rule);}
+.runbook>li>span{font-family:var(--font-sans);font-size:11px;color:var(--sm);padding-top:4px;}
+.runbook b{display:inline-block;min-width:210px;font-size:17px;}
+.runbook code{font-size:12px;}.runbook p{display:inline;color:var(--muted);font-size:14px;margin-left:18px;}
+.rule-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);margin-top:30px;border:1px solid var(--rule);}
+.rule-grid article{background:var(--paper);padding:24px;}
+.rule-grid h3{font-size:22px;margin:5px 0 8px;}.rule-grid p{font-size:15px;line-height:1.5;color:var(--ink-2);margin:0;}
+.quality-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:30px;}
+.quality-grid h3{font-size:18px;margin:0 0 8px;}.quality-grid p{font-size:15px;color:var(--ink-2);line-height:1.5;margin:0;}
 .method-note{border-left:2px solid var(--sm);padding-left:14px;font-size:15px;color:var(--ink-2);line-height:1.5;margin:30px 0 0;}
 
 /* footer */
@@ -627,7 +678,15 @@ thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
 .foot-notes p{font-size:15px;color:var(--ink-2);line-height:1.5;margin:0;max-width:66ch;}
 .foot-meta{display:flex;flex-direction:column;gap:3px;margin-top:22px;font-family:var(--font-sans);font-size:11.5px;color:var(--muted);}
 
-@media (max-width:560px){ .paper{padding:44px 18px 56px;} body{font-size:17px;} .pipeline{grid-template-columns:1fr 1fr;} .pipeline div:nth-child(2)::after{display:none;} }
+@media (max-width:760px){
+  .site-nav-inner{padding:9px 18px;align-items:flex-start;}.site-brand{display:none}.site-links{width:100%;justify-content:space-between;gap:14px;}
+  .paper{padding:44px 18px 56px;} body{font-size:17px;}
+  .theme-btn{position:static;margin-top:18px;}
+  .system-map{grid-template-columns:1fr 1fr;}.system-map article{min-height:125px}.system-map article:nth-child(2)::after,.system-map article:nth-child(4)::after{display:none;}
+  .layer-row{grid-template-columns:1fr;gap:12px}.layer-row>div:not(.layer-id){padding-left:18px;border-left:1px solid var(--rule);}
+  .runbook b{display:block;min-width:0}.runbook code{display:block;margin:2px 0 5px}.runbook p{display:block;margin:0;}
+  .rule-grid,.quality-grid{grid-template-columns:1fr}.quality-grid{gap:24px}
+}
 @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
 """
 
@@ -653,23 +712,42 @@ def _standalone(title, desc, style, body):
     )
 
 
+def _nav(current: str, analysis_href: str = "index.html") -> str:
+    marker = f'data-page="{current}"'
+    nav = SITE_NAV.replace(marker, f'{marker} aria-current="page"')
+    return nav.replace('href="index.html"', f'href="{analysis_href}"')
+
+
 def main():
     nested = load_nested()
     data_json = json.dumps(nested, ensure_ascii=False, separators=(",", ":"))
-    body = HTML.replace("__DATA__", data_json)
+    content = HTML.replace("__DATA__", data_json)
+    body = _nav("analise") + content
+    artifact_body = _nav("analise", "dashboard.html") + content
+    arch_body = _nav("arquitetura") + ARCH_HTML
+    arch_artifact_body = _nav("arquitetura", "dashboard.html") + ARCH_HTML.replace(
+        'href="index.html"', 'href="dashboard.html"'
+    )
     style = f"<style>\n{CSS}\n</style>"
     title = "Observatório da Educação — Santa Maria/RS"
     desc = ("Vinte anos de dado do INEP: Santa Maria começa forte na educação básica e vai "
             "perdendo o passo. IDEB, SAEB, aprovação e distorção idade-série.")
+    arch_title = "Arquitetura e metodologia — Observatório da Educação"
+    arch_desc = ("Arquitetura do pipeline: INEP, Base dos Dados, BigQuery, Parquet, dbt, "
+                 "DuckDB, testes, curadoria e visualização.")
 
     # 1) versão Artifact (só conteúdo; o harness embrulha em <html>/<head>/<body>)
-    OUT.write_text(f"<title>{title}</title>\n{style}\n{body}", encoding="utf-8")
+    OUT.write_text(f"<title>{title}</title>\n{style}\n{artifact_body}", encoding="utf-8")
+    ARCH_OUT.write_text(f"<title>{arch_title}</title>\n{style}\n{arch_artifact_body}", encoding="utf-8")
     # 2) versão standalone p/ web/Railway (documento completo, com <head> e meta tags)
     PUB.parent.mkdir(parents=True, exist_ok=True)
     PUB.write_text(_standalone(title, desc, style, body), encoding="utf-8")
+    ARCH_PUB.write_text(_standalone(arch_title, arch_desc, style, arch_body), encoding="utf-8")
 
     print(f"✔ {OUT.relative_to(ROOT)} ({OUT.stat().st_size/1024:.1f} KB)")
     print(f"✔ {PUB.relative_to(ROOT)} ({PUB.stat().st_size/1024:.1f} KB)")
+    print(f"✔ {ARCH_OUT.relative_to(ROOT)} ({ARCH_OUT.stat().st_size/1024:.1f} KB)")
+    print(f"✔ {ARCH_PUB.relative_to(ROOT)} ({ARCH_PUB.stat().st_size/1024:.1f} KB)")
 
 
 if __name__ == "__main__":

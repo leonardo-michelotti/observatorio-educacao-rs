@@ -1,6 +1,7 @@
 # Deploy — dashboard no Railway
 
-O que vai pro ar é **só o dashboard estático** (`public/index.html`), servido por um
+O que vai pro ar são **duas páginas estáticas** (`public/index.html` e
+`public/arquitetura.html`), servidas por um
 **Caddy** mínimo e endurecido. Sem backend, sem BigQuery, **sem segredos na imagem** — o
 pipeline de dados continua rodando localmente e só o HTML gerado é publicado.
 
@@ -15,7 +16,8 @@ pipeline de dados continua rodando localmente e só o HTML gerado é publicado.
 
 | Arquivo | Papel |
 |---|---|
-| `public/index.html` | a página (gerada por `viz/build_dashboard.py`, versionada) |
+| `public/index.html` | narrativa e explorador (gerados e versionados) |
+| `public/arquitetura.html` | arquitetura, metodologia e decisões de curadoria |
 | `Dockerfile` | imagem `caddy:2-alpine` que copia `public/` e o `Caddyfile` |
 | `Caddyfile` | servidor estático + cabeçalhos de segurança + `$PORT` do Railway |
 | `.dockerignore` | bloqueia tudo menos `Caddyfile` e `public/` (nada de `.env`/dados/venv) |
