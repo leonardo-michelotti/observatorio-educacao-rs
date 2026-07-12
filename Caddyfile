@@ -1,0 +1,35 @@
+# Servidor estático endurecido para o dashboard (peça estática, sem backend).
+# Railway termina o TLS na borda e encaminha HTTP para este container na porta $PORT,
+# por isso auto_https fica desligado.
+{
+	admin off
+	persist_config off
+	auto_https off
+}
+
+:{$PORT:8080} {
+	root * /srv
+	encode zstd gzip
+	file_server
+
+	# Cabeçalhos de segurança. A página é 100% autocontida (CSS/JS inline, SVG inline),
+	# não busca nada externo — então travamos tudo e liberamos só o necessário.
+	header {
+		Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "geolocation=(), microphone=(), camera=(), interest-cohort=()"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	# Cache: HTML sempre revalidado (é gerado pelo pipeline); assets estáticos podem durar.
+	@html path *.html /
+	header @html Cache-Control "no-cache"
+
+	log {
+		output stdout
+		format console
+	}
+}

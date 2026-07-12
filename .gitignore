@@ -26,6 +26,10 @@ dbt/.user.yml
 node_modules/
 .evidence/
 
+# Previews temporários de render (screenshots/cópias de teste da viz)
+viz/_*.png
+viz/_*.html
+
 # SO / editores
 .DS_Store
 .vscode/

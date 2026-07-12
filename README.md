@@ -112,10 +112,15 @@ flowchart LR
 
 O runner [`run_pipeline.py`](run_pipeline.py) encadeia as etapas de forma idempotente.
 
-> **Painel interativo.** Além dos PNGs da vitrine, o pipeline gera
-> [`viz/dashboard.html`](viz/dashboard.html) — uma página única e autocontida com filtros por
-> indicador/etapa, hover com tooltip, visão de tabela e tema claro/escuro (o GitHub sanitiza JS,
-> então abra o arquivo localmente). Feito por [`viz/build_dashboard.py`](viz/build_dashboard.py).
+> **Painel interativo.** Além dos PNGs da vitrine, o pipeline gera uma peça editorial de dados
+> autocontida — narrativa "começa forte e perde o passo", com gráficos anotados, hover, visão de
+> tabela e tema claro/escuro. Duas saídas de [`viz/build_dashboard.py`](viz/build_dashboard.py):
+> [`viz/dashboard.html`](viz/dashboard.html) (abra localmente — o GitHub sanitiza JS) e
+> [`public/index.html`](public/index.html) (documento completo pronto para a web).
+>
+> **No ar.** Dá para publicar num clique: `Dockerfile` + `Caddyfile` (estático, endurecido) +
+> `railway.toml` deixam o painel de pé no [Railway](https://railway.app/) com HTTPS e sem expor
+> segredo algum. Passo a passo em [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ## Recorte e metodologia
 

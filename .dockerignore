@@ -1,0 +1,6 @@
+# Contexto de build mínimo e SEGURO: só entra o que a imagem precisa.
+# Bloqueia tudo e libera só Caddyfile + public/ — garante que .env, credenciais,
+# dados brutos, .venv, código do pipeline etc. NUNCA entrem na imagem.
+*
+!Caddyfile
+!public/

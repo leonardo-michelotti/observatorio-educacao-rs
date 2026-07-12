@@ -1,44 +1,159 @@
-#!/usr/bin/env python3
-"""Dashboard — lê o fato tidy (DuckDB) e gera uma peça editorial de dados, autocontida.
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Observatório da Educação — Santa Maria/RS</title>
+<meta name="description" content="Vinte anos de dado do INEP: Santa Maria começa forte na educação básica e vai perdendo o passo. IDEB, SAEB, aprovação e distorção idade-série.">
+<meta property="og:title" content="Observatório da Educação — Santa Maria/RS">
+<meta property="og:description" content="Vinte anos de dado do INEP: Santa Maria começa forte na educação básica e vai perdendo o passo. IDEB, SAEB, aprovação e distorção idade-série.">
+<meta property="og:type" content="website">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Ctext%20y%3D%27.9em%27%20font-size%3D%2790%27%3E%F0%9F%8E%93%3C/text%3E%3C/svg%3E">
+<style>
 
-Não é um "explorador de indicadores": é um artigo que conta um fio condutor — Santa Maria
-começa forte no Ensino Fundamental e perde o passo conforme o aluno avança. Segue princípios
-de data-journalism (cor como atenção seletiva: Santa Maria em destaque, RS/Brasil em cinza;
-anotação direta na linha; a escolha do gráfico é a narrativa). Dados embutidos inline (o
-Artifact/CSP bloqueia rede). O explorador interativo fica no fim, como ferramenta secundária.
-"""
-import json
-import urllib.parse
-from pathlib import Path
+:root{
+  --paper:#f5f4ef; --ink:#1c1b16; --ink-2:#565349; --muted:#928e82; --rule:#d8d5cb; --rule-2:#e6e3da;
+  --sm:#c1402a; --br:#3f3c34; --rs:#a29d90;
+  --font-serif:"Iowan Old Style","Charter","Sorts Mill Goudy","Georgia","Times New Roman",serif;
+  --font-sans:ui-sans-serif,"Avenir Next","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --paper:#16150f; --ink:#efe9d9; --ink-2:#b2ac9a; --muted:#787366; --rule:#2e2b22; --rule-2:#221f18;
+    --sm:#e0603f; --br:#c9c3b2; --rs:#7c7768; }
+}
+:root[data-theme="light"]{ --paper:#f5f4ef; --ink:#1c1b16; --ink-2:#565349; --muted:#928e82; --rule:#d8d5cb; --rule-2:#e6e3da;
+  --sm:#c1402a; --br:#3f3c34; --rs:#a29d90; }
+:root[data-theme="dark"]{ --paper:#16150f; --ink:#efe9d9; --ink-2:#b2ac9a; --muted:#787366; --rule:#2e2b22; --rule-2:#221f18;
+  --sm:#e0603f; --br:#c9c3b2; --rs:#7c7768; }
 
-import duckdb
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-serif);
+  line-height:1.62;-webkit-font-smoothing:antialiased;font-size:18px;}
+.paper{max-width:720px;margin:0 auto;padding:64px 28px 72px;}
+b{font-weight:700;} i{font-style:italic;}
+code{font-family:var(--font-sans);font-size:.78em;color:var(--ink-2);letter-spacing:.01em;}
 
-ROOT = Path(__file__).resolve().parent.parent
-DB = ROOT / "data" / "educacao.duckdb"
-OUT = ROOT / "viz" / "dashboard.html"          # versão p/ o Artifact (só conteúdo)
-PUB = ROOT / "public" / "index.html"           # versão standalone p/ web/Railway
+/* masthead */
+.masthead{position:relative;border-bottom:2px solid var(--ink);padding-bottom:26px;}
+.kicker{font-family:var(--font-sans);font-size:12.5px;letter-spacing:.02em;color:var(--sm);
+  text-transform:none;margin:0 0 18px;font-weight:600;}
+.headline{font-size:clamp(34px,6.4vw,54px);line-height:1.02;font-weight:700;letter-spacing:-.015em;
+  margin:0;text-wrap:balance;}
+.standfirst{font-size:19px;color:var(--ink-2);margin:20px 0 0;max-width:60ch;line-height:1.55;}
+.theme-btn{position:absolute;top:0;right:0;font-family:var(--font-sans);font-size:12px;color:var(--muted);
+  background:none;border:1px solid var(--rule);border-radius:2px;padding:4px 9px;cursor:pointer;letter-spacing:.04em;}
+.theme-btn:hover{color:var(--ink);border-color:var(--ink-2);}
 
+/* hero */
+.hero{margin:38px 0 8px;}
+.lede,.hero-caption{font-size:17px;color:var(--ink-2);line-height:1.5;}
+.lede{margin:0 0 6px;}
+.hero-caption{margin:10px 0 0;border-left:2px solid var(--sm);padding-left:14px;}
+.hero-caption b{color:var(--ink);}
+.fig-hero{margin:14px 0 0;}
 
-def load_nested():
-    con = duckdb.connect(str(DB), read_only=True)
-    try:
-        rows = con.execute(
-            """select indicador, nivel, etapa, ano, round(valor,1) valor
-               from fct_indicadores order by indicador, etapa, nivel, ano"""
-        ).fetchall()
-    finally:
-        con.close()
-    nested = {}
-    for ind, niv, eta, ano, val in rows:
-        nested.setdefault(ind, {}).setdefault(eta, {}).setdefault(niv, []).append([ano, val])
-    for ind in nested:
-        for eta in nested[ind]:
-            for niv in nested[ind][eta]:
-                nested[ind][eta][niv].sort()
-    return nested
+/* rules & sections */
+.rule{height:0;border-top:1px solid var(--rule);margin:52px 0;}
+.act{margin:46px 0;}
+.act-num{font-family:var(--font-sans);font-size:12.5px;font-weight:700;letter-spacing:.02em;color:var(--sm);
+  margin:0 0 6px;}
+.act h2{font-size:clamp(23px,3.4vw,30px);line-height:1.14;font-weight:700;letter-spacing:-.01em;margin:0 0 12px;
+  text-wrap:balance;}
+.act p{margin:0;color:var(--ink-2);font-size:17.5px;line-height:1.56;max-width:62ch;}
+.act p b{color:var(--ink);}
 
+/* figures (no cards, no shadow) */
+.fig{position:relative;margin:22px 0 0;}
+.fig svg{width:100%;height:auto;display:block;overflow:visible;}
+.grid{stroke:var(--rule-2);stroke-width:1;}
+.axis-lbl{fill:var(--muted);font-family:var(--font-sans);font-size:11px;font-variant-numeric:tabular-nums;}
+.line{stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.l-sm{stroke:var(--sm);stroke-width:2.6;} .l-br{stroke:var(--br);} .l-rs{stroke:var(--rs);stroke-dasharray:5 4;}
+.dot{stroke:var(--paper);stroke-width:1.4;}
+.d-sm{fill:var(--sm);} .d-br{fill:var(--br);} .d-rs{fill:var(--rs);}
+.dot-end{stroke:var(--paper);stroke-width:1.6;}
+.end-lbl{font-family:var(--font-sans);font-size:12px;font-variant-numeric:tabular-nums;}
+.end-lbl .e-val{font-weight:700;} .end-lbl .e-name{font-size:10.5px;}
+.e-sm{fill:var(--sm);} .e-br{fill:var(--ink-2);} .e-rs{fill:var(--muted);}
+.e-sm .e-name{fill:var(--sm);}
 
-HTML = r"""<div class="paper">
+/* annotations */
+.annot-line{stroke-width:1;fill:none;opacity:.55;}
+.annot-line.c-sm{stroke:var(--sm);} .annot-line.c-br{stroke:var(--br);}
+.annot-anchor{stroke:var(--paper);stroke-width:1.5;}
+.annot{position:absolute;transform:translate(-50%,-50%);font-family:var(--font-sans);font-size:12px;
+  line-height:1.25;max-width:150px;text-align:center;pointer-events:none;font-weight:600;
+  background:var(--paper);padding:1px 5px;border-radius:2px;}
+.annot.a-sm{color:var(--sm);} .annot.a-br{color:var(--ink-2);}
+
+/* hero trajectory */
+.traj-line{stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;fill:none;}
+.traj-num{font-family:var(--font-serif);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums;}
+.n-sm{fill:var(--sm);} .n-br{fill:var(--ink-2);}
+.stage-lbl{fill:var(--ink);font-family:var(--font-sans);font-size:13px;font-weight:600;}
+.traj-endtag{font-family:var(--font-sans);font-size:12px;font-weight:600;}
+.traj-endnum{font-family:var(--font-serif);font-weight:700;font-variant-numeric:tabular-nums;}
+.n-sm.traj-endnum{font-size:22px;} .n-br.traj-endnum{font-size:16px;}
+.t-sm{fill:var(--sm);} .t-br{fill:var(--muted);}
+
+/* crosshair + tooltip */
+.crosshair{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:3 3;opacity:.45;}
+.focus-dot{stroke:var(--paper);stroke-width:1.8;}
+.tooltip{position:absolute;top:8px;background:var(--paper);border:1px solid var(--rule);border-radius:3px;
+  padding:8px 10px;font-family:var(--font-sans);font-size:12.5px;pointer-events:none;min-width:150px;z-index:5;
+  box-shadow:0 6px 18px rgba(0,0,0,.10);}
+.tip-year{font-weight:700;margin-bottom:5px;font-variant-numeric:tabular-nums;}
+.tip-row{display:flex;align-items:center;gap:7px;padding:2px 0;color:var(--ink-2);}
+.tip-row b{margin-left:auto;color:var(--ink);font-variant-numeric:tabular-nums;}
+.tip-dot,.leg-swatch{width:10px;flex:none;}
+.tip-dot{height:10px;border-radius:50%;}
+.dot-sm{background:var(--sm);} .dot-br{background:var(--br);} .dot-rs{background:var(--rs);}
+
+/* explorer */
+.explore{margin-top:8px;}
+.explore h2{font-size:clamp(23px,3.4vw,30px);font-weight:700;margin:0 0 10px;letter-spacing:-.01em;}
+.explore-lede{color:var(--ink-2);font-size:16.5px;margin:0 0 22px;}
+.controls{display:flex;flex-wrap:wrap;gap:18px 28px;padding:16px 0;border-top:1px solid var(--rule);
+  border-bottom:1px solid var(--rule);}
+.ctl{display:flex;flex-direction:column;gap:9px;}
+.ctl-lbl{font-family:var(--font-sans);font-size:11px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;}
+.pills{display:flex;flex-wrap:wrap;gap:0;}
+.pill{font-family:var(--font-sans);font-size:13.5px;padding:5px 13px;cursor:pointer;border:none;background:none;
+  color:var(--muted);border-bottom:2px solid transparent;transition:color .12s,border-color .12s;}
+.pill:hover:not(:disabled){color:var(--ink);}
+.pill[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--sm);font-weight:600;}
+.pill:disabled{opacity:.32;cursor:not-allowed;}
+.pill:focus-visible,.link-btn:focus-visible,.theme-btn:focus-visible{outline:2px solid var(--sm);outline-offset:2px;}
+.chart-head{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 2px;gap:12px;}
+.chart-head h3{font-size:21px;font-weight:700;margin:0;}
+.ex-unit{font-family:var(--font-sans);font-size:12.5px;color:var(--muted);margin:0 0 4px;}
+.link-btn{font-family:var(--font-sans);font-size:13px;color:var(--sm);background:none;border:none;cursor:pointer;
+  padding:0;border-bottom:1px solid currentColor;}
+.legend{display:flex;flex-wrap:wrap;gap:18px;margin:12px 0 0;font-family:var(--font-sans);font-size:13px;color:var(--ink-2);}
+.leg-item{display:flex;align-items:center;gap:7px;}
+.leg-swatch{height:3px;border-radius:2px;}
+.sw-sm{background:var(--sm);height:4px;} .sw-br{background:var(--br);}
+.sw-rs{background:linear-gradient(90deg,var(--rs) 60%,transparent 60%);background-size:9px 100%;height:3px;}
+.table-wrap{overflow-x:auto;margin-top:12px;}
+table{border-collapse:collapse;width:100%;font-family:var(--font-sans);font-size:13.5px;}
+th,td{padding:6px 12px;text-align:right;border-bottom:1px solid var(--rule-2);font-variant-numeric:tabular-nums;}
+th:first-child,td:first-child{text-align:left;color:var(--muted);}
+thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
+
+/* footer */
+.foot{margin-top:56px;padding-top:26px;border-top:2px solid var(--ink);}
+.foot-h{font-family:var(--font-sans);font-size:12.5px;font-weight:700;letter-spacing:.02em;color:var(--ink);margin:0 0 8px;}
+.foot-notes p{font-size:15px;color:var(--ink-2);line-height:1.5;margin:0;max-width:66ch;}
+.foot-meta{display:flex;flex-direction:column;gap:3px;margin-top:22px;font-family:var(--font-sans);font-size:11.5px;color:var(--muted);}
+
+@media (max-width:560px){ .paper{padding:44px 18px 56px;} body{font-size:17px;} }
+@media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+
+</style>
+</head>
+<body>
+<div class="paper">
 
   <header class="masthead">
     <p class="kicker">Observatório da educação básica · rede pública · Santa Maria / RS</p>
@@ -165,7 +280,7 @@ HTML = r"""<div class="paper">
 </div>
 
 <script>
-const DATA = __DATA__;
+const DATA = {"distorcao_idade_serie":{"ef_anos_finais":{"brasil":[[2006,35.4],[2007,34.0],[2008,27.4],[2009,28.9],[2010,29.6],[2011,28.8],[2012,28.2],[2013,27.5],[2014,27.3],[2015,26.8],[2016,26.3],[2017,25.9],[2018,24.7],[2019,23.4],[2020,22.7],[2021,21.0],[2022,18.5],[2023,17.0],[2024,15.7],[2025,14.4]],"rs":[[2023,22.4],[2024,17.9]],"santa_maria":[[2006,25.3],[2007,24.9],[2008,24.5],[2009,25.6],[2010,26.0],[2011,26.3],[2012,28.0],[2013,28.3],[2014,29.6],[2015,30.0],[2016,28.9],[2017,29.1],[2018,28.6],[2019,28.7],[2020,28.4],[2021,25.8],[2022,21.6],[2023,20.6],[2024,19.8]]}},"ideb":{"ef_anos_finais":{"brasil":[[2005,3.2],[2007,3.5],[2009,3.7],[2011,3.9],[2013,4.0],[2015,4.2],[2017,4.4],[2019,4.6],[2021,4.9],[2023,4.7]],"rs":[[2005,3.6],[2007,3.7],[2009,3.9],[2011,3.9],[2013,4.0],[2015,4.2],[2017,4.4],[2019,4.5],[2021,5.0],[2023,4.7]],"santa_maria":[[2005,3.7],[2007,3.8],[2009,4.0],[2011,4.0],[2013,4.1],[2017,4.6],[2019,4.5],[2021,5.1],[2023,4.6]]},"ef_anos_iniciais":{"brasil":[[2005,3.6],[2007,4.0],[2009,4.4],[2011,4.7],[2013,4.9],[2015,5.3],[2017,5.5],[2019,5.7],[2021,5.5],[2023,5.7]],"rs":[[2005,4.1],[2007,4.5],[2009,4.7],[2011,5.1],[2013,5.4],[2015,5.5],[2017,5.6],[2019,5.8],[2021,5.8],[2023,5.8]],"santa_maria":[[2005,4.3],[2007,4.4],[2009,4.5],[2011,5.0],[2013,5.5],[2017,5.7],[2019,5.7],[2021,5.7],[2023,5.8]]},"em":{"brasil":[[2005,3.1],[2007,3.2],[2009,3.4],[2011,3.4],[2013,3.4],[2015,3.5],[2017,3.5],[2019,3.9],[2021,3.9],[2023,4.1]],"santa_maria":[[2019,3.1],[2023,2.4]]}},"saeb_lingua_portuguesa":{"ef_anos_finais":{"brasil":[[2005,225.4],[2007,228.9],[2009,238.7],[2011,238.8],[2013,239.4],[2015,247.3],[2017,253.8],[2019,255.7],[2021,254.9],[2023,254.6]],"rs":[[2005,239.5],[2007,239.1],[2009,249.5],[2011,247.3],[2013,248.7],[2015,254.6],[2017,262.5],[2019,263.3],[2021,260.6],[2023,260.0]],"santa_maria":[[2005,238.6],[2007,244.8],[2009,257.2],[2011,253.2],[2013,256.3],[2017,273.3],[2019,269.5],[2021,259.9],[2023,262.2]]},"ef_anos_iniciais":{"brasil":[[2005,167.6],[2007,171.4],[2009,179.6],[2011,185.7],[2013,189.7],[2015,202.3],[2017,209.2],[2019,209.1],[2021,201.4],[2023,207.6]],"rs":[[2005,177.1],[2007,179.9],[2009,187.5],[2011,193.9],[2013,201.7],[2015,208.3],[2017,213.8],[2019,216.8],[2021,210.9],[2023,212.9]],"santa_maria":[[2005,186.2],[2007,181.3],[2009,184.7],[2011,194.3],[2013,206.0],[2017,216.6],[2019,216.4],[2021,206.1],[2023,214.8]]},"em":{"brasil":[[2005,249.3],[2007,254.1],[2009,262.2],[2011,261.4],[2013,256.6],[2015,260.9],[2017,260.4],[2019,272.3],[2021,269.8],[2023,270.2]],"santa_maria":[[2019,299.7],[2023,297.7]]}},"saeb_matematica":{"ef_anos_finais":{"brasil":[[2005,231.6],[2007,240.6],[2009,241.8],[2011,244.8],[2013,243.8],[2015,250.6],[2017,252.0],[2019,257.2],[2021,252.0],[2023,251.3]],"rs":[[2005,252.7],[2007,251.4],[2009,257.0],[2011,257.5],[2013,254.1],[2015,256.9],[2017,261.6],[2019,264.0],[2021,257.6],[2023,255.1]],"santa_maria":[[2005,256.6],[2007,258.1],[2009,264.6],[2011,261.6],[2013,262.7],[2017,270.5],[2019,266.8],[2021,256.9],[2023,256.4]]},"ef_anos_iniciais":{"brasil":[[2005,177.1],[2007,189.1],[2009,199.5],[2011,204.6],[2013,205.1],[2015,214.6],[2017,218.6],[2019,222.4],[2021,210.1],[2023,218.3]],"rs":[[2005,187.0],[2007,197.8],[2009,208.0],[2011,212.3],[2013,218.1],[2015,219.5],[2017,222.4],[2019,226.4],[2021,216.8],[2023,222.1]],"santa_maria":[[2005,191.6],[2007,198.4],[2009,202.9],[2011,211.5],[2013,220.1],[2017,223.7],[2019,224.8],[2021,210.2],[2023,221.5]]},"em":{"brasil":[[2005,260.8],[2007,263.7],[2009,265.9],[2011,265.4],[2013,261.1],[2015,260.0],[2017,260.3],[2019,269.0],[2021,262.7],[2023,264.7]],"santa_maria":[[2019,305.1],[2023,292.7]]}},"taxa_aprovacao":{"ef_anos_finais":{"brasil":[[2007,79.8],[2008,79.9],[2011,83.4],[2012,84.1],[2013,85.1],[2014,84.8],[2015,85.7],[2016,85.6],[2017,87.1],[2018,88.1],[2019,89.9],[2020,97.8],[2021,95.7],[2022,92.1],[2023,94.0],[2024,94.1],[2025,96.2]],"rs":[[2011,76.4],[2012,76.9],[2013,78.1],[2014,78.5],[2015,76.0],[2016,77.7],[2017,77.2],[2018,77.4],[2019,82.8],[2020,83.8],[2021,84.8],[2022,86.5],[2024,91.4]],"santa_maria":[[2007,78.3],[2008,77.3],[2009,76.2],[2010,76.0],[2011,78.3],[2012,78.5],[2013,80.3],[2014,79.7],[2015,80.8],[2016,81.5],[2017,82.7],[2018,81.8],[2019,84.2],[2021,97.0],[2022,89.6],[2023,97.5],[2024,97.4]]},"ef_anos_iniciais":{"brasil":[[2007,85.8],[2008,87.0],[2011,91.2],[2012,91.7],[2013,92.7],[2014,92.7],[2015,93.2],[2016,93.2],[2017,94.0],[2018,94.2],[2019,95.1],[2020,98.5],[2021,97.6],[2022,96.0],[2023,97.2],[2024,97.4],[2025,98.3]],"rs":[[2011,94.1],[2012,94.1],[2013,94.9],[2014,94.8],[2015,94.7],[2016,94.7],[2017,94.6],[2018,96.2],[2019,97.7],[2020,97.3],[2021,97.6],[2022,97.4],[2024,96.0]],"santa_maria":[[2007,89.2],[2008,89.9],[2009,89.2],[2010,89.4],[2011,91.5],[2012,94.4],[2013,93.3],[2014,92.6],[2015,92.8],[2016,93.1],[2017,93.6],[2018,93.5],[2019,93.4],[2021,98.8],[2022,94.9],[2023,95.5],[2024,97.5]]},"em":{"brasil":[[2007,74.1],[2008,74.9],[2011,77.4],[2012,78.7],[2013,80.1],[2014,80.3],[2015,81.7],[2016,81.5],[2017,83.1],[2018,83.4],[2019,86.1],[2020,95.0],[2021,90.8],[2022,86.6],[2023,91.3],[2024,91.7],[2025,94.8]],"rs":[[2024,85.5]],"santa_maria":[[2007,64.5],[2008,63.1],[2009,63.8],[2010,63.2],[2011,65.6],[2012,68.8],[2013,74.5],[2014,72.4],[2015,74.1],[2016,72.4],[2017,71.5],[2018,70.8],[2019,78.6],[2021,90.0],[2022,78.2]]}}};
 
 const IND = {
   ideb:                    {label:"IDEB",                     unit:"IDEB — escala de 0 a 10"},
@@ -404,187 +519,6 @@ buildPills(); renderEx();
 document.getElementById("view-toggle").onclick=()=>{tableOpen=!tableOpen; renderEx();};
 addEventListener("resize",()=>{ drawTrajectory(); drawNarrative(); if(!tableOpen) renderEx(); });
 </script>
-"""
 
-CSS = r"""
-:root{
-  --paper:#f5f4ef; --ink:#1c1b16; --ink-2:#565349; --muted:#928e82; --rule:#d8d5cb; --rule-2:#e6e3da;
-  --sm:#c1402a; --br:#3f3c34; --rs:#a29d90;
-  --font-serif:"Iowan Old Style","Charter","Sorts Mill Goudy","Georgia","Times New Roman",serif;
-  --font-sans:ui-sans-serif,"Avenir Next","Segoe UI",system-ui,sans-serif;
-}
-@media (prefers-color-scheme: dark){
-  :root{ --paper:#16150f; --ink:#efe9d9; --ink-2:#b2ac9a; --muted:#787366; --rule:#2e2b22; --rule-2:#221f18;
-    --sm:#e0603f; --br:#c9c3b2; --rs:#7c7768; }
-}
-:root[data-theme="light"]{ --paper:#f5f4ef; --ink:#1c1b16; --ink-2:#565349; --muted:#928e82; --rule:#d8d5cb; --rule-2:#e6e3da;
-  --sm:#c1402a; --br:#3f3c34; --rs:#a29d90; }
-:root[data-theme="dark"]{ --paper:#16150f; --ink:#efe9d9; --ink-2:#b2ac9a; --muted:#787366; --rule:#2e2b22; --rule-2:#221f18;
-  --sm:#e0603f; --br:#c9c3b2; --rs:#7c7768; }
-
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-serif);
-  line-height:1.62;-webkit-font-smoothing:antialiased;font-size:18px;}
-.paper{max-width:720px;margin:0 auto;padding:64px 28px 72px;}
-b{font-weight:700;} i{font-style:italic;}
-code{font-family:var(--font-sans);font-size:.78em;color:var(--ink-2);letter-spacing:.01em;}
-
-/* masthead */
-.masthead{position:relative;border-bottom:2px solid var(--ink);padding-bottom:26px;}
-.kicker{font-family:var(--font-sans);font-size:12.5px;letter-spacing:.02em;color:var(--sm);
-  text-transform:none;margin:0 0 18px;font-weight:600;}
-.headline{font-size:clamp(34px,6.4vw,54px);line-height:1.02;font-weight:700;letter-spacing:-.015em;
-  margin:0;text-wrap:balance;}
-.standfirst{font-size:19px;color:var(--ink-2);margin:20px 0 0;max-width:60ch;line-height:1.55;}
-.theme-btn{position:absolute;top:0;right:0;font-family:var(--font-sans);font-size:12px;color:var(--muted);
-  background:none;border:1px solid var(--rule);border-radius:2px;padding:4px 9px;cursor:pointer;letter-spacing:.04em;}
-.theme-btn:hover{color:var(--ink);border-color:var(--ink-2);}
-
-/* hero */
-.hero{margin:38px 0 8px;}
-.lede,.hero-caption{font-size:17px;color:var(--ink-2);line-height:1.5;}
-.lede{margin:0 0 6px;}
-.hero-caption{margin:10px 0 0;border-left:2px solid var(--sm);padding-left:14px;}
-.hero-caption b{color:var(--ink);}
-.fig-hero{margin:14px 0 0;}
-
-/* rules & sections */
-.rule{height:0;border-top:1px solid var(--rule);margin:52px 0;}
-.act{margin:46px 0;}
-.act-num{font-family:var(--font-sans);font-size:12.5px;font-weight:700;letter-spacing:.02em;color:var(--sm);
-  margin:0 0 6px;}
-.act h2{font-size:clamp(23px,3.4vw,30px);line-height:1.14;font-weight:700;letter-spacing:-.01em;margin:0 0 12px;
-  text-wrap:balance;}
-.act p{margin:0;color:var(--ink-2);font-size:17.5px;line-height:1.56;max-width:62ch;}
-.act p b{color:var(--ink);}
-
-/* figures (no cards, no shadow) */
-.fig{position:relative;margin:22px 0 0;}
-.fig svg{width:100%;height:auto;display:block;overflow:visible;}
-.grid{stroke:var(--rule-2);stroke-width:1;}
-.axis-lbl{fill:var(--muted);font-family:var(--font-sans);font-size:11px;font-variant-numeric:tabular-nums;}
-.line{stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-.l-sm{stroke:var(--sm);stroke-width:2.6;} .l-br{stroke:var(--br);} .l-rs{stroke:var(--rs);stroke-dasharray:5 4;}
-.dot{stroke:var(--paper);stroke-width:1.4;}
-.d-sm{fill:var(--sm);} .d-br{fill:var(--br);} .d-rs{fill:var(--rs);}
-.dot-end{stroke:var(--paper);stroke-width:1.6;}
-.end-lbl{font-family:var(--font-sans);font-size:12px;font-variant-numeric:tabular-nums;}
-.end-lbl .e-val{font-weight:700;} .end-lbl .e-name{font-size:10.5px;}
-.e-sm{fill:var(--sm);} .e-br{fill:var(--ink-2);} .e-rs{fill:var(--muted);}
-.e-sm .e-name{fill:var(--sm);}
-
-/* annotations */
-.annot-line{stroke-width:1;fill:none;opacity:.55;}
-.annot-line.c-sm{stroke:var(--sm);} .annot-line.c-br{stroke:var(--br);}
-.annot-anchor{stroke:var(--paper);stroke-width:1.5;}
-.annot{position:absolute;transform:translate(-50%,-50%);font-family:var(--font-sans);font-size:12px;
-  line-height:1.25;max-width:150px;text-align:center;pointer-events:none;font-weight:600;
-  background:var(--paper);padding:1px 5px;border-radius:2px;}
-.annot.a-sm{color:var(--sm);} .annot.a-br{color:var(--ink-2);}
-
-/* hero trajectory */
-.traj-line{stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;fill:none;}
-.traj-num{font-family:var(--font-serif);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums;}
-.n-sm{fill:var(--sm);} .n-br{fill:var(--ink-2);}
-.stage-lbl{fill:var(--ink);font-family:var(--font-sans);font-size:13px;font-weight:600;}
-.traj-endtag{font-family:var(--font-sans);font-size:12px;font-weight:600;}
-.traj-endnum{font-family:var(--font-serif);font-weight:700;font-variant-numeric:tabular-nums;}
-.n-sm.traj-endnum{font-size:22px;} .n-br.traj-endnum{font-size:16px;}
-.t-sm{fill:var(--sm);} .t-br{fill:var(--muted);}
-
-/* crosshair + tooltip */
-.crosshair{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:3 3;opacity:.45;}
-.focus-dot{stroke:var(--paper);stroke-width:1.8;}
-.tooltip{position:absolute;top:8px;background:var(--paper);border:1px solid var(--rule);border-radius:3px;
-  padding:8px 10px;font-family:var(--font-sans);font-size:12.5px;pointer-events:none;min-width:150px;z-index:5;
-  box-shadow:0 6px 18px rgba(0,0,0,.10);}
-.tip-year{font-weight:700;margin-bottom:5px;font-variant-numeric:tabular-nums;}
-.tip-row{display:flex;align-items:center;gap:7px;padding:2px 0;color:var(--ink-2);}
-.tip-row b{margin-left:auto;color:var(--ink);font-variant-numeric:tabular-nums;}
-.tip-dot,.leg-swatch{width:10px;flex:none;}
-.tip-dot{height:10px;border-radius:50%;}
-.dot-sm{background:var(--sm);} .dot-br{background:var(--br);} .dot-rs{background:var(--rs);}
-
-/* explorer */
-.explore{margin-top:8px;}
-.explore h2{font-size:clamp(23px,3.4vw,30px);font-weight:700;margin:0 0 10px;letter-spacing:-.01em;}
-.explore-lede{color:var(--ink-2);font-size:16.5px;margin:0 0 22px;}
-.controls{display:flex;flex-wrap:wrap;gap:18px 28px;padding:16px 0;border-top:1px solid var(--rule);
-  border-bottom:1px solid var(--rule);}
-.ctl{display:flex;flex-direction:column;gap:9px;}
-.ctl-lbl{font-family:var(--font-sans);font-size:11px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;}
-.pills{display:flex;flex-wrap:wrap;gap:0;}
-.pill{font-family:var(--font-sans);font-size:13.5px;padding:5px 13px;cursor:pointer;border:none;background:none;
-  color:var(--muted);border-bottom:2px solid transparent;transition:color .12s,border-color .12s;}
-.pill:hover:not(:disabled){color:var(--ink);}
-.pill[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--sm);font-weight:600;}
-.pill:disabled{opacity:.32;cursor:not-allowed;}
-.pill:focus-visible,.link-btn:focus-visible,.theme-btn:focus-visible{outline:2px solid var(--sm);outline-offset:2px;}
-.chart-head{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 2px;gap:12px;}
-.chart-head h3{font-size:21px;font-weight:700;margin:0;}
-.ex-unit{font-family:var(--font-sans);font-size:12.5px;color:var(--muted);margin:0 0 4px;}
-.link-btn{font-family:var(--font-sans);font-size:13px;color:var(--sm);background:none;border:none;cursor:pointer;
-  padding:0;border-bottom:1px solid currentColor;}
-.legend{display:flex;flex-wrap:wrap;gap:18px;margin:12px 0 0;font-family:var(--font-sans);font-size:13px;color:var(--ink-2);}
-.leg-item{display:flex;align-items:center;gap:7px;}
-.leg-swatch{height:3px;border-radius:2px;}
-.sw-sm{background:var(--sm);height:4px;} .sw-br{background:var(--br);}
-.sw-rs{background:linear-gradient(90deg,var(--rs) 60%,transparent 60%);background-size:9px 100%;height:3px;}
-.table-wrap{overflow-x:auto;margin-top:12px;}
-table{border-collapse:collapse;width:100%;font-family:var(--font-sans);font-size:13.5px;}
-th,td{padding:6px 12px;text-align:right;border-bottom:1px solid var(--rule-2);font-variant-numeric:tabular-nums;}
-th:first-child,td:first-child{text-align:left;color:var(--muted);}
-thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
-
-/* footer */
-.foot{margin-top:56px;padding-top:26px;border-top:2px solid var(--ink);}
-.foot-h{font-family:var(--font-sans);font-size:12.5px;font-weight:700;letter-spacing:.02em;color:var(--ink);margin:0 0 8px;}
-.foot-notes p{font-size:15px;color:var(--ink-2);line-height:1.5;margin:0;max-width:66ch;}
-.foot-meta{display:flex;flex-direction:column;gap:3px;margin-top:22px;font-family:var(--font-sans);font-size:11.5px;color:var(--muted);}
-
-@media (max-width:560px){ .paper{padding:44px 18px 56px;} body{font-size:17px;} }
-@media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
-"""
-
-
-def _standalone(title, desc, style, body):
-    """Documento HTML completo p/ servir na web (o Artifact embrulha sozinho; a web não)."""
-    svg = ("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>"
-           "<text y='.9em' font-size='90'>🎓</text></svg>")
-    favicon = "data:image/svg+xml," + urllib.parse.quote(svg)
-    return (
-        "<!doctype html>\n<html lang=\"pt-BR\">\n<head>\n"
-        "<meta charset=\"utf-8\">\n"
-        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
-        f"<title>{title}</title>\n"
-        f"<meta name=\"description\" content=\"{desc}\">\n"
-        f"<meta property=\"og:title\" content=\"{title}\">\n"
-        f"<meta property=\"og:description\" content=\"{desc}\">\n"
-        "<meta property=\"og:type\" content=\"website\">\n"
-        "<meta name=\"color-scheme\" content=\"light dark\">\n"
-        f"<link rel=\"icon\" href=\"{favicon}\">\n"
-        f"{style}\n</head>\n<body>\n{body}\n</body>\n</html>\n"
-    )
-
-
-def main():
-    nested = load_nested()
-    data_json = json.dumps(nested, ensure_ascii=False, separators=(",", ":"))
-    body = HTML.replace("__DATA__", data_json)
-    style = f"<style>\n{CSS}\n</style>"
-    title = "Observatório da Educação — Santa Maria/RS"
-    desc = ("Vinte anos de dado do INEP: Santa Maria começa forte na educação básica e vai "
-            "perdendo o passo. IDEB, SAEB, aprovação e distorção idade-série.")
-
-    # 1) versão Artifact (só conteúdo; o harness embrulha em <html>/<head>/<body>)
-    OUT.write_text(f"<title>{title}</title>\n{style}\n{body}", encoding="utf-8")
-    # 2) versão standalone p/ web/Railway (documento completo, com <head> e meta tags)
-    PUB.parent.mkdir(parents=True, exist_ok=True)
-    PUB.write_text(_standalone(title, desc, style, body), encoding="utf-8")
-
-    print(f"✔ {OUT.relative_to(ROOT)} ({OUT.stat().st_size/1024:.1f} KB)")
-    print(f"✔ {PUB.relative_to(ROOT)} ({PUB.stat().st_size/1024:.1f} KB)")
-
-
-if __name__ == "__main__":
-    main()
+</body>
+</html>
