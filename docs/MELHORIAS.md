@@ -74,6 +74,11 @@ Dados: IDEB EF (2005–2023) e taxa de aprovação (2007–2025) em 3 níveis (S
   com crosshair+tooltip, rótulos diretos, visão de tabela, tema claro/escuro. Paleta categórica
   revalidada (light + dark próprios) e renderização conferida por screenshot nos dois temas.
   Plugado no `run_pipeline.py` como 4ª etapa. Publicado como Artifact.
+  - **v2 (redesign editorial):** a v1 tinha "cara de IA" (cards+sombra, eyebrow mono, explorador
+    neutro). Refeito como **peça de data-journalism**: narrativa "começa forte e perde o passo",
+    cor como atenção seletiva (Santa Maria em destaque, RS/Brasil em cinza), anotações direto nas
+    linhas, hero = a queda 5,8→4,6→2,4 vs Brasil segurando, tipografia serif, sem cards. O
+    explorador virou seção secundária. Conferido nos dois temas por screenshot.
 - [ ] **D2 · Perfil da escola.** 🔥 Depende de A1: painel do seu colégio (IDEB no tempo,
   SAEB Mat vs Port, ranking dentro de Santa Maria).
 - [ ] **D3 · Gráficos novos.** 🟡 Ranking de escolas de Santa Maria; gap vs meta INEP;
