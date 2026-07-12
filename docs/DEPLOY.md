@@ -4,6 +4,13 @@ O que vai pro ar é **só o dashboard estático** (`public/index.html`), servido
 **Caddy** mínimo e endurecido. Sem backend, sem BigQuery, **sem segredos na imagem** — o
 pipeline de dados continua rodando localmente e só o HTML gerado é publicado.
 
+**No ar:** <https://observatorio-educacao-rs-production.up.railway.app>
+
+> Nota do primeiro deploy: o `railway up` (CLI) usa o Railpack, que detecta o site estático e
+> copia o contexto para `/app`. Por isso o `Caddyfile`/`Dockerfile` servem `/app/public`. Se
+> você conectar via GitHub, o `railway.toml` faz usar o `Dockerfile` (que também serve
+> `/app/public`) — os dois caminhos são equivalentes.
+
 ## Arquivos que compõem o deploy
 
 | Arquivo | Papel |

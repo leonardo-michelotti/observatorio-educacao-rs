@@ -8,6 +8,8 @@
 ![status](https://img.shields.io/badge/pipeline-verde-brightgreen)
 ![testes](https://img.shields.io/badge/testes%20dbt-11%2F11-brightgreen)
 
+**🌐 Painel ao vivo:** <https://observatorio-educacao-rs-production.up.railway.app>
+
 Como Santa Maria se compara ao RS e ao Brasil na educação básica pública — e como isso
 evolui no tempo. Não é só um gráfico: é o **pipeline inteiro** (ingestão → bronze →
 silver/gold com testes → visualização), reprodutível com um comando.
