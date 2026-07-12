@@ -8,7 +8,7 @@
 }
 
 :{$PORT:8080} {
-	root * /srv
+	root * /app/public
 	encode zstd gzip
 	file_server
 

@@ -3,7 +3,7 @@
 FROM caddy:2-alpine
 
 COPY Caddyfile /etc/caddy/Caddyfile
-COPY public /srv
+COPY public /app/public
 
 # Documentação de porta (Railway injeta $PORT em runtime; o Caddyfile já a usa).
 EXPOSE 8080

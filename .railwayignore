@@ -1,0 +1,8 @@
+# Upload mínimo e seguro para os builders do Railway: só o que o Dockerfile precisa.
+# Impede que .env, credenciais, dados brutos, .venv e o código do pipeline saiam da máquina.
+*
+!Dockerfile
+!Caddyfile
+!railway.toml
+!public/
+!public/**
