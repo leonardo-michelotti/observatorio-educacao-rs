@@ -174,6 +174,9 @@ thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
 .foot-h{font-family:var(--font-sans);font-size:12.5px;font-weight:700;letter-spacing:.02em;color:var(--ink);margin:0 0 8px;}
 .foot-notes p{font-size:15px;color:var(--ink-2);line-height:1.5;margin:0;max-width:66ch;}
 .foot-meta{display:flex;flex-direction:column;gap:3px;margin-top:22px;font-family:var(--font-sans);font-size:11.5px;color:var(--muted);}
+.foot-meta a{color:inherit;text-decoration-color:color-mix(in srgb,currentColor 45%,transparent);text-underline-offset:2px;}
+.foot-meta a:hover{color:var(--ink);}
+.foot-author{margin-top:8px;}
 
 @media (max-width:760px){
   .site-nav-inner{padding:9px 18px;align-items:flex-start;}.site-brand{display:none}.site-links{width:100%;justify-content:space-between;gap:14px;}
@@ -317,6 +320,7 @@ thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
       <span>Fonte: INEP · <code>br_inep_ideb</code>, <code>br_inep_indicadores_educacionais</code></span>
       <span>Santa Maria/RS · IBGE <code>4316907</code></span>
       <span>IDEB e SAEB: rede pública · demais indicadores: rede total · 2005–2025</span>
+      <span class="foot-author">Projeto desenvolvido por <a href="https://github.com/leonardo-michelotti" target="_blank" rel="noopener noreferrer">Leonardo Michelotti</a>. Código e metodologia disponíveis no <a href="https://github.com/leonardo-michelotti/observatorio-educacao-rs" target="_blank" rel="noopener noreferrer">GitHub</a>.</span>
     </div>
   </footer>
 </main>
