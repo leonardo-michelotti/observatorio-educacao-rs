@@ -5,8 +5,6 @@
 > transformação e testes com dbt e entrega uma narrativa visual publicada na web.
 
 ![stack](https://img.shields.io/badge/stack-BigQuery%20%C2%B7%20DuckDB%20%C2%B7%20dbt%20%C2%B7%20matplotlib-blue)
-![status](https://img.shields.io/badge/pipeline-verde-brightgreen)
-![testes](https://img.shields.io/badge/testes%20dbt-11%2F11-brightgreen)
 
 **[Abrir a análise](https://observatorio-educacao-rs-production.up.railway.app/)** ·
 **[Ver arquitetura e metodologia](https://observatorio-educacao-rs-production.up.railway.app/arquitetura.html)**
@@ -18,7 +16,7 @@ fácil de ampliar com novos indicadores e recortes.
 
 ### O que este projeto demonstra
 
-- **Engenharia de dados:** ingestão no BigQuery, bronze em Parquet, transformação com dbt e
+- **Engenharia de dados:** ingestão a partir do BigQuery, bronze em Parquet, transformação com dbt e
   consumo analítico no DuckDB.
 - **Qualidade:** testes de schema, regras explícitas de validade e curadoria documentada para
   séries problemáticas.
@@ -31,13 +29,13 @@ fácil de ampliar com novos indicadores e recortes.
   dimensões próprias.
 
 **Três achados que os dados contam:**
-1. **A pandemia derrubou a aprendizagem, e o IDEB mascara isso.** Separando o índice em
-   proficiência (SAEB) e rendimento (aprovação), a proficiência despencou de 2019 para 2021
-   enquanto a aprovação *subia*.
+1. **A aprendizagem caiu no período da pandemia, mas o IDEB amorteceu o movimento.** Separando
+   o índice em proficiência (SAEB) e rendimento (aprovação), vê-se que a proficiência caiu de
+   2019 para 2021 enquanto a aprovação subiu.
 2. **Santa Maria vai bem no Fundamental, mas patina no resto.** A distorção idade-série da
-   cidade (19,8%) é *pior* que a do Brasil (14,4%) nos anos finais.
+   cidade (19,8%) é maior que a do Brasil (15,7%) nos anos finais, comparando 2024.
 3. **O Ensino Médio é o gargalo.** A aprovação de EM de Santa Maria (78,2%) fica muito abaixo
-   do Brasil (94,8%), e o IDEB de EM caiu de 3,1 (2019) para 2,4 (2023).
+   do Brasil (86,6%) em 2022, e o IDEB de EM caiu de 3,1 (2019) para 2,4 (2023).
 
 ---
 
@@ -55,8 +53,8 @@ fácil de ampliar com novos indicadores e recortes.
 | EF · Anos finais | **4,6** | 4,7 | 4,7 |
 
 Santa Maria acompanha de perto o estado e o país nos anos iniciais (empata com o RS,
-acima do Brasil) e fica um décimo abaixo nos anos finais. É o gargalo clássico da
-transição para o 6º ano, visível nos três níveis.
+acima do Brasil) e fica um décimo abaixo nos anos finais. A diferença entre as etapas também
+aparece no RS e no Brasil, sem que o indicador isolado explique suas causas.
 
 ### SAEB — proficiência (o que compõe o IDEB)
 
@@ -75,36 +73,38 @@ Separar os dois revela o que o índice suaviza: **a perda de aprendizagem da pan
 | 2023 | 221,5 | 214,8 |
 
 A proficiência caiu cerca de 15 pontos de 2019 para 2021 e recuperou quase tudo em 2023. O mesmo
-padrão em RS e Brasil. No **mesmo período a taxa de aprovação subiu**: aprovou-se mais alunos
-que aprenderam menos, e o IDEB (que pondera os dois) amortece a queda. Nos **anos finais de
-2019**, Santa Maria teve o pico da comparação: Matemática **266,8** e Português **269,5**,
-acima de RS e Brasil.
+padrão aparece no RS e no Brasil. No **mesmo período a taxa de aprovação subiu**: mais alunos
+foram aprovados apesar da queda na aprendizagem medida, e o IDEB, que combina os dois
+componentes, amorteceu o movimento. Nos **anos finais de 2019**, Santa Maria ficou acima de RS
+e Brasil: Matemática **266,8** e Português **269,5**.
 
 ### Taxa de aprovação — Ensino Fundamental e Médio
 
 ![Taxa de aprovação — Santa Maria vs RS vs Brasil](assets/taxa_aprovacao.png)
 
-**Taxa de aprovação, último ano disponível:**
+**Taxa de aprovação, comparação no mesmo ano:**
 
 | Etapa | Santa Maria | RS | Brasil |
 |---|:-:|:-:|:-:|
-| EF · Anos iniciais | 97,5% (2024) | 96,0% (2024) | 98,3% (2025) |
-| EF · Anos finais | **97,4% (2024)** | 91,4% (2024) | 96,2% (2025) |
-| Ensino médio | **78,2% (2022)** | 85,5% (2024) | 94,8% (2025) |
+| EF · Anos iniciais (2024) | **97,5%** | 96,0% | 97,4% |
+| EF · Anos finais (2024) | **97,4%** | 91,4% | 94,1% |
+| Ensino médio (2022) | **78,2%** | —¹ | 86,6% |
 
-No Fundamental, Santa Maria lidera os anos finais, com um salto a partir de 2019 e resultado bem acima da
-curva mais baixa do RS. **No Ensino Médio o quadro inverte**: a aprovação de Santa Maria
-(78,2%) despenca frente ao Brasil (94,8%), coerente com o IDEB de EM da cidade (2,4). O EM é
-o ponto fraco e, por isso, a etapa onde ainda há mais a ganhar.
+¹ O recorte do RS para 2022 foi excluído pela curadoria por apresentar valor inconsistente.
+
+Em 2024, Santa Maria supera RS e Brasil nas duas etapas do Fundamental. **No Ensino Médio o
+quadro inverte**: em 2022, a aprovação de Santa Maria (78,2%) fica abaixo do Brasil (86,6%),
+coerente com o IDEB de EM da cidade (2,4 em 2023). O EM é o ponto fraco e, por isso, a etapa
+onde ainda há mais a ganhar.
 
 ### Distorção idade-série — EF anos finais
 
 ![Distorção idade-série — Santa Maria vs Brasil](assets/distorcao_idade_serie.png)
 
-Recolocada na vitrine **após auditoria** (ver notas de qualidade), restrita à única série que
-passa no teste: EF anos finais, Santa Maria vs Brasil. O resultado exige atenção:
+Recolocada na vitrine **após auditoria** (ver notas de qualidade), restrita ao único recorte
+mantido após a verificação: EF anos finais, Santa Maria vs Brasil. O resultado exige atenção:
 a distorção idade-série de Santa Maria (**19,8% em 2024**) é *mais alta* que a do Brasil
-(**14,4%**) e caiu mais tarde. Reforça a leitura dos outros gráficos: a base (anos iniciais)
+(**15,7% em 2024**) e caiu mais tarde. Reforça a leitura dos outros gráficos: a base (anos iniciais)
 vai bem, mas o percurso escolar acumula atraso conforme avança.
 
 ---
@@ -141,9 +141,9 @@ gráficos e construção das páginas.
 > [`viz/arquitetura.html`](viz/arquitetura.html), além de [`public/index.html`](public/index.html)
 > e [`public/arquitetura.html`](public/arquitetura.html), prontos para a web.
 >
-> **No ar.** Dá para publicar num clique: `Dockerfile` + `Caddyfile` (estático, endurecido) +
-> `railway.toml` deixam o painel de pé no [Railway](https://railway.app/) com HTTPS e sem expor
-> segredo algum. Passo a passo em [`docs/DEPLOY.md`](docs/DEPLOY.md).
+> **No ar.** `Dockerfile` + `Caddyfile` (estático, endurecido) + `railway.toml` automatizam o
+> deploy no [Railway](https://railway.app/) com HTTPS, sem incluir credenciais ou dados brutos
+> na imagem. Passo a passo em [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ### Escopo atual e caminho de evolução
 
@@ -164,7 +164,8 @@ atômica, testes de contrato mais amplos, proveniência de cada extração e CI.
   IDEB), **taxa de aprovação** (o rendimento) e **distorção idade-série** (EF anos finais).
 - **IDEB / SAEB:** rede **pública**, a única comparável nos três níveis no Ensino Fundamental.
 - **Modelo tidy** (`fct_indicadores`): uma linha por `(indicador, nível, etapa, ano, valor)`,
-  com testes dbt (`not_null`, `accepted_values`) em todas as chaves. São **11/11 verdes**.
+  com **8 testes dbt de schema** (`not_null`, `accepted_values`) sobre chaves e valores de
+  domínio.
 - **Regra dos gráficos:** cada etapa é renderizada se tiver **pelo menos 2 séries sólidas**
   (≥5 anos), plotando só as que passam. Por isso o IDEB de EM fica de fora (série curta) mas a
   distorção aparece como Santa Maria vs Brasil.
@@ -173,11 +174,15 @@ atômica, testes de contrato mais amplos, proveniência de cada extração e CI.
 
 As decisões abaixo foram tomadas após auditoria célula a célula.
 
-- **O bug está na Base dos Dados, não no INEP.** A tabela `br_inep_indicadores_educacionais`
+- **O bug está na camada harmonizada, não na publicação oficial do INEP.** A tabela
+  `br_inep_indicadores_educacionais`
   tem colunas corrompidas de forma sistemática na harmonização: a aprovação de EM do RS, por
   exemplo, aparece entre 4% e 11% em **todas** as fatias de rede/localização, um intervalo
-  impossível. A publicação oficial do INEP é pública e consistente. A integração direta desses
-  arquivos é um próximo passo; por enquanto, mantemos a Base dos Dados com curadoria explícita.
+  incompatível com as planilhas oficiais. O problema está registrado na
+  [issue #1430](https://github.com/basedosdados/pipelines/issues/1430), e o
+  [PR #1653](https://github.com/basedosdados/pipelines/pull/1653) propõe um teste contra novas
+  regressões. A integração direta dos arquivos do INEP é um próximo passo; por enquanto,
+  mantemos a Base dos Dados com curadoria explícita.
   A metodologia e as decisões de curadoria estão na
   [página de arquitetura](https://observatorio-educacao-rs-production.up.railway.app/arquitetura.html)
   e nos modelos dbt versionados.
@@ -189,13 +194,18 @@ As decisões abaixo foram tomadas após auditoria célula a célula.
 - **Ensino médio entra só onde o dado aguenta.** O *IDEB* de EM fica fora (Santa Maria reporta
   só 2 anos). A *aprovação* de EM entra como **Santa Maria vs Brasil**: o RS é corrompido na
   origem e cai sozinho pela regra dos gráficos; os pontos corrompidos de SM (2023–24) são
-  removidos por um filtro de validade (`valor ∈ [40, 100]`).
+  removidos por uma heurística de curadoria específica deste projeto (`valor ∈ [40, 100]`).
+  O intervalo reduz anomalias conhecidas, mas não substitui a validação contra a fonte oficial.
 
 ## Como rodar
 
-Pré-requisitos: Python 3.12+, uma conta Google Cloud (grátis; 1 TB/mês de consulta no
-BigQuery) e projeto com a BigQuery API ativa. Passo a passo detalhado em
+Pré-requisitos: Python 3.12+ e um projeto Google Cloud com a BigQuery API ativa e faturamento
+configurado. O BigQuery oferece franquia mensal de 1 TiB para consultas sob o modelo on-demand;
+uso excedente pode gerar cobrança. Consulte os [preços atuais](https://cloud.google.com/bigquery/pricing)
+e configure limites de custo. Passo a passo detalhado em
 [`docs/COMO_RODAR.md`](docs/COMO_RODAR.md).
+
+Em Bash (Linux, macOS ou WSL):
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
@@ -205,6 +215,19 @@ gcloud auth application-default login          # autentica o ADC (abre o navegad
 cp .env.example .env                           # e preencha BILLING_PROJECT_ID
 
 python run_pipeline.py                         # ingest → dbt build → gráficos → páginas
+```
+
+Em PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+
+gcloud auth application-default login
+Copy-Item .env.example .env                    # preencha BILLING_PROJECT_ID
+
+python run_pipeline.py
 ```
 
 Ao final: dados em `data/educacao.duckdb`, gráficos em `assets/` e páginas em `public/`.
@@ -223,4 +246,4 @@ docs/PESQUISA_FONTES.md   fontes públicas, proveniência e limites de uso
 
 ---
 
-*Projeto pessoal de portfólio de dados. Fonte: INEP via Base dos Dados. Dados públicos oficiais.*
+*Projeto pessoal de portfólio de dados. Fonte: INEP via Base dos Dados. Dados públicos de origem oficial.*
