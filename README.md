@@ -1,18 +1,34 @@
 # Observatório da Educação: RS e Santa Maria
 
-> Pipeline de dados de ponta a ponta sobre **educação básica** no Rio Grande do Sul, com
-> recorte em **Santa Maria/RS**. Dado público oficial (INEP) → lakehouse → transformação
-> testada → gráficos. A **vitrine vive dentro deste README** e é gerada pelo próprio pipeline.
+> Um produto de dados de ponta a ponta sobre a educação básica em **Santa Maria/RS**.
+> Parte de dados públicos do INEP, organiza uma arquitetura medalhão local, aplica
+> transformação e testes com dbt e entrega uma narrativa visual publicada na web.
 
 ![stack](https://img.shields.io/badge/stack-BigQuery%20%C2%B7%20DuckDB%20%C2%B7%20dbt%20%C2%B7%20matplotlib-blue)
 ![status](https://img.shields.io/badge/pipeline-verde-brightgreen)
 ![testes](https://img.shields.io/badge/testes%20dbt-11%2F11-brightgreen)
 
-**Painel ao vivo:** <https://observatorio-educacao-rs-production.up.railway.app>
+**[Abrir a análise](https://observatorio-educacao-rs-production.up.railway.app/)** ·
+**[Ver arquitetura e metodologia](https://observatorio-educacao-rs-production.up.railway.app/arquitetura.html)**
 
-Como Santa Maria se compara ao RS e ao Brasil por meio dos indicadores da educação básica e como isso
-evolui no tempo. Não é só um gráfico: é o **pipeline inteiro** (ingestão → bronze →
-silver/gold com testes → visualização), reprodutível com um comando.
+O projeto responde como Santa Maria se compara ao Rio Grande do Sul e ao Brasil e como esse
+quadro evolui no tempo. O escopo é pequeno de propósito: uma fonte principal, três níveis
+geográficos e um contrato de dados simples. O resultado é um pipeline completo, auditável e
+fácil de ampliar com novos indicadores e recortes.
+
+### O que este projeto demonstra
+
+- **Engenharia de dados:** ingestão no BigQuery, bronze em Parquet, transformação com dbt e
+  consumo analítico no DuckDB.
+- **Qualidade:** testes de schema, regras explícitas de validade e curadoria documentada para
+  séries problemáticas.
+- **Produto:** gráficos versionados, painel editorial responsivo e explorador com tabela
+  alternativa.
+- **Operação:** execução centralizada em um runner e deploy estático endurecido no Railway,
+  sem credenciais ou dados brutos na imagem.
+- **Evolução:** o fato tidy permite acrescentar indicadores semelhantes sem redesenhar todo o
+  fluxo. Novas granularidades, como escola e rede administrativa, têm um caminho claro para
+  dimensões próprias.
 
 **Três achados que os dados contam:**
 1. **A pandemia derrubou a aprendizagem, e o IDEB mascara isso.** Separando o índice em
@@ -44,8 +60,8 @@ transição para o 6º ano, visível nos três níveis.
 
 ### SAEB — proficiência (o que compõe o IDEB)
 
-O IDEB combina **proficiência** (nota SAEB) e **rendimento** (aprovação). Separar os dois
-revela o que o índice suaviza: **a perda de aprendizagem da pandemia**.
+O IDEB combina **proficiência padronizada a partir do SAEB** e **rendimento** (aprovação).
+Separar os dois revela o que o índice suaviza: **a perda de aprendizagem da pandemia**.
 
 ![SAEB Matemática — Santa Maria vs RS vs Brasil](assets/saeb_matematica.png)
 ![SAEB Língua Portuguesa — Santa Maria vs RS vs Brasil](assets/saeb_lingua_portuguesa.png)
@@ -102,7 +118,9 @@ flowchart LR
   BRONZE --> DBT[dbt-duckdb<br/>staging · marts + testes]
   DBT --> DUCK[(DuckDB<br/>educacao.duckdb)]
   DUCK --> CHARTS[matplotlib<br/>PNG em assets/]
+  DUCK --> PAGES[HTML autocontido<br/>análise + arquitetura]
   CHARTS --> README[Vitrine no README]
+  PAGES --> WEB[Railway<br/>Caddy estático]
 ```
 
 | Camada | Ferramenta |
@@ -112,7 +130,8 @@ flowchart LR
 | Transformação | [dbt](https://www.getdbt.com/) (`dbt-duckdb`) com testes de schema |
 | Visualização | [matplotlib](https://matplotlib.org/) → PNG versionados no repo |
 
-O runner [`run_pipeline.py`](run_pipeline.py) encadeia as etapas de forma idempotente.
+O runner [`run_pipeline.py`](run_pipeline.py) encadeia ingestão, `dbt build`, geração dos
+gráficos e construção das páginas.
 
 > **Painel interativo.** Além dos PNGs da vitrine, o pipeline gera uma peça editorial de dados
 > autocontida, com a narrativa "começa forte e perde o passo", gráficos anotados, hover, visão de
@@ -125,6 +144,17 @@ O runner [`run_pipeline.py`](run_pipeline.py) encadeia as etapas de forma idempo
 > **No ar.** Dá para publicar num clique: `Dockerfile` + `Caddyfile` (estático, endurecido) +
 > `railway.toml` deixam o painel de pé no [Railway](https://railway.app/) com HTTPS e sem expor
 > segredo algum. Passo a passo em [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+### Escopo atual e caminho de evolução
+
+Esta é uma arquitetura deliberadamente simples, adequada ao volume e à frequência atuais. Ela
+está fechada como produto de portfólio: dados, transformação, testes, documentação, visualização
+e deploy fazem parte do mesmo fluxo.
+
+Para crescer dentro do recorte atual, um novo indicador passa por ingestão, staging, mart,
+testes e registro na visualização. Se o projeto avançar para escolas, múltiplas redes, mais
+fontes ou atualizações frequentes, a evolução natural inclui dimensões explícitas, ingestão
+atômica, testes de contrato mais amplos, proveniência de cada extração e CI.
 
 ## Recorte e metodologia
 
@@ -148,7 +178,9 @@ As decisões abaixo foram tomadas após auditoria célula a célula.
   exemplo, aparece entre 4% e 11% em **todas** as fatias de rede/localização, um intervalo
   impossível. A publicação oficial do INEP é pública e consistente. A integração direta desses
   arquivos é um próximo passo; por enquanto, mantemos a Base dos Dados com curadoria explícita.
-  Detalhe completo em [`docs/MELHORIAS.md`](docs/MELHORIAS.md) (achado AF-6).
+  A metodologia e as decisões de curadoria estão na
+  [página de arquitetura](https://observatorio-educacao-rs-production.up.railway.app/arquitetura.html)
+  e nos modelos dbt versionados.
 - **Distorção idade-série: mantida só onde audita limpo.** A corrupção é irregular: RS quebrado
   até 2022, Santa Maria quebrada nos anos iniciais pós-2020, EM corrompido para todos. A **única
   série que sobrevive é EF anos finais** (Santa Maria e Brasil suaves; RS só confiável ≥2023, e
@@ -172,10 +204,10 @@ pip install -r requirements.txt
 gcloud auth application-default login          # autentica o ADC (abre o navegador)
 cp .env.example .env                           # e preencha BILLING_PROJECT_ID
 
-python run_pipeline.py                         # ingest → dbt build → gráficos
+python run_pipeline.py                         # ingest → dbt build → gráficos → páginas
 ```
 
-Ao final: dados em `data/educacao.duckdb`, gráficos atualizados em `assets/`.
+Ao final: dados em `data/educacao.duckdb`, gráficos em `assets/` e páginas em `public/`.
 
 ## Estrutura
 
@@ -186,7 +218,7 @@ dbt/models/marts/         fct_indicadores (fato tidy + testes)
 viz/make_charts.py        DuckDB → PNGs em assets/ (vitrine do README)
 viz/build_dashboard.py    DuckDB → páginas autocontidas de análise e arquitetura
 run_pipeline.py           orquestra as quatro etapas
-docs/MELHORIAS.md         investigação viva de melhorias e achados
+docs/PESQUISA_FONTES.md   fontes públicas, proveniência e limites de uso
 ```
 
 ---

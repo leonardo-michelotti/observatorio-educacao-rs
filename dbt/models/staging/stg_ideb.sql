@@ -1,7 +1,7 @@
 -- IDEB (formato longo na origem): normaliza a etapa e mantém IDEB + notas SAEB (Mat/Port).
 -- As notas SAEB são os componentes de PROFICIÊNCIA do IDEB (o outro componente é o
 -- rendimento/aprovação). Carregá-las permite decompor o índice e enxergar o baque da
--- pandemia que a taxa de aprovação mascara. Ver docs/MELHORIAS.md (A2/AF-1).
+-- pandemia que a taxa de aprovação mascara. A decisão está documentada no README.
 with src as (
     select * from read_parquet('data/bronze/ideb.parquet')
 )

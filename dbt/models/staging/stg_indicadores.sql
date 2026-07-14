@@ -19,7 +19,7 @@ aprovacao_valida as (
 ),
 
 -- 2) DISTORÇÃO IDADE-SÉRIE (curadoria célula a célula) -----------------------
--- Antes excluída por inteiro. A auditoria (docs/MELHORIAS.md, AF-3) mostrou que a
+-- Antes excluída por inteiro. A auditoria documentada no README mostrou que a
 -- corrupção na fonte é IRREGULAR entre séries — e que só UMA sobrevive:
 --   * EF anos INICIAIS: Santa Maria corrompida pós-2020 (6,5% em 2022 -> 23,5% em 2023). ❌
 --   * Ensino MÉDIO: corrompido para todos (até o Brasil salta 44->55->63). ❌
