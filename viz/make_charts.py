@@ -122,8 +122,11 @@ def make_figure(con, indicador):
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=len(handles), frameon=False,
                fontsize=9, labelcolor=INK_2, bbox_to_anchor=(0.5, -0.02))
-    fig.text(0.01, -0.02, "Fonte: INEP via Base dos Dados (BigQuery). Rede pública (IDEB) / total (demais).",
-             color=MUTED, fontsize=7.5, ha="left")
+    if indicador in {"taxa_aprovacao", "distorcao_idade_serie"}:
+        source = "Fonte: planilhas oficiais do INEP. Rede e localização: total."
+    else:
+        source = "Fonte: INEP via Base dos Dados (BigQuery). Rede pública."
+    fig.text(0.01, -0.02, source, color=MUTED, fontsize=7.5, ha="left")
 
     fig.tight_layout(rect=(0, 0.04, 1, 0.94))
     out = ASSETS / f"{indicador}.png"

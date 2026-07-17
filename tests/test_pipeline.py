@@ -64,5 +64,8 @@ def test_artefatos_publicaveis_foram_gerados():
     ]
 
     assert all(arquivo.exists() and arquivo.stat().st_size > 500 for arquivo in arquivos)
-    assert "const DATA =" in arquivos[0].read_text(encoding="utf-8")
+    painel = arquivos[0].read_text(encoding="utf-8")
+    assert "const DATA =" in painel
+    assert "__APROV_" not in painel and "__TDI_" not in painel
+    assert "planilhas oficiais do INEP" in painel
     assert arquivos[2].read_bytes().startswith(b"\x89PNG\r\n\x1a\n")

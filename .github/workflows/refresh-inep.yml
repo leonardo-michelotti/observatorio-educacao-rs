@@ -2,14 +2,10 @@ name: Atualização oficial Inep
 
 on:
   workflow_dispatch:
-    inputs:
-      years:
-        description: "Ano ou intervalo inclusivo (ex.: 2025 ou 2023:2025); vazio = histórico completo"
-        required: false
-        type: string
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
 
 concurrency:
   group: refresh-inep-${{ github.ref }}
@@ -37,18 +33,11 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements-dev.txt
 
-      - name: Criar IDEB sintético para exercitar o pipeline sem credenciais
-        run: python tests/fixtures/make_bronze.py
+      - name: Restaurar o snapshot real de IDEB e SAEB
+        run: python ingestion/load_ideb_snapshot.py
 
       - name: Baixar e validar rendimento e TDI oficiais
-        env:
-          YEARS: ${{ inputs.years }}
-        run: |
-          if [ -n "$YEARS" ]; then
-            python ingestion/extract_inep.py --years "$YEARS"
-          else
-            python ingestion/extract_inep.py
-          fi
+        run: python ingestion/extract_inep.py
 
       - name: Construir e testar o produto de dados
         run: |
@@ -71,3 +60,23 @@ jobs:
             assets/*.png
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Abrir PR com a atualização publicável
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="automation/inep-refresh-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add public/ viz/dashboard.html viz/arquitetura.html
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração publicável encontrada." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git commit -m "Atualiza indicadores oficiais do Inep"
+          git push --set-upstream origin "$branch"
+          url=$(gh pr create --base main --head "$branch" \
+            --title "Atualiza indicadores oficiais do Inep" \
+            --body "Atualiza os gráficos e as páginas com o histórico completo de rendimento e TDI publicado pelo Inep. A proveniência e os resultados do pipeline estão anexados à execução da Action.")
+          echo "PR criado: $url" >> "$GITHUB_STEP_SUMMARY"

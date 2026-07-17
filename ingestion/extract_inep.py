@@ -24,10 +24,13 @@ from typing import Iterable, Iterator, Sequence
 
 import pandas as pd
 import requests
+import truststore
 import xlrd
 from openpyxl import load_workbook
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
+truststore.inject_into_ssl()
 
 ROOT = Path(__file__).resolve().parents[1]
 BRONZE = ROOT / "data" / "bronze"
@@ -133,7 +136,7 @@ def _stage_columns(header: Sequence[Sequence[object]], source: str) -> dict[str,
         lambda index, text: correct_family(index, text)
         and "medio" in text
         and "total" in text
-        and "nao seriado" not in text,
+        and not re.search(r"nao[- ]seriado", text),
         "Ensino Médio",
     )
     return {"ef_anos_iniciais": initial, "ef_anos_finais": final, "em": high_school}
@@ -147,7 +150,9 @@ def _is_municipality_code(value: object) -> bool:
     return 1_000_000 <= number <= 9_999_999
 
 
-def _row_level(row: Sequence[object], value_start: int) -> str | None:
+def _row_level(
+    row: Sequence[object], value_start: int, default_level: str | None = None
+) -> str | None:
     metadata = list(row[:value_start])
     normalized = [_normalize(value) for value in metadata]
     if normalized.count("total") < 2:
@@ -162,6 +167,8 @@ def _row_level(row: Sequence[object], value_start: int) -> str | None:
     has_municipality_code = any(_is_municipality_code(value) for value in metadata)
     if not has_municipality_code and ({"rs", "rio grande do sul"} & set(normalized)):
         return "rs"
+    if not has_municipality_code and default_level:
+        return default_level
     return None
 
 
@@ -170,6 +177,7 @@ def _parse_rows(
     source: str,
     expected_year: int,
     wanted: set[str] | None = None,
+    default_level: str | None = None,
 ) -> dict[str, dict]:
     header: list[Sequence[object]] = []
     columns: dict[str, int] | None = None
@@ -186,7 +194,7 @@ def _parse_rows(
             columns = _stage_columns(header, source)
         if row_year != expected_year:
             continue
-        level = _row_level(row, min(columns.values()))
+        level = _row_level(row, min(columns.values()), default_level)
         if level is None:
             continue
         values = {
@@ -228,8 +236,17 @@ def parse_archive(
         for name in spreadsheets:
             content = archive.read(name)
             sheets = _xlsx_sheets(content) if name.lower().endswith(".xlsx") else _xls_sheets(content)
+            filename = _normalize(Path(name).stem)
+            national_only = (
+                "brasil" in filename
+                and "regio" not in filename
+                and not re.search(r"(?:^|\W)ufs?(?:\W|$)", filename)
+            )
+            default_level = "brasil" if national_only else None
             for rows in sheets:
-                for level, values in _parse_rows(rows, source, year, wanted).items():
+                for level, values in _parse_rows(
+                    rows, source, year, wanted, default_level
+                ).items():
                     if level in found and found[level] != values:
                         raise ValueError(f"Conflito em {path.name}: {level}")
                     found[level] = values

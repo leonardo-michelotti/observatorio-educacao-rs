@@ -40,6 +40,20 @@ def load_nested():
     return nested
 
 
+def _latest_common(nested, indicator, stage, levels=("brasil", "rs", "santa_maria")):
+    series = nested[indicator][stage]
+    by_level = {level: dict(series[level]) for level in levels}
+    common_years = set.intersection(*(set(values) for values in by_level.values()))
+    if not common_years:
+        raise ValueError(f"Sem ano comum para {indicator}/{stage}")
+    year = max(common_years)
+    return year, {level: by_level[level][year] for level in levels}
+
+
+def _percent(value):
+    return f"{value:.1f}".replace(".", ",")
+
+
 SITE_NAV = r"""<nav class="site-nav" aria-label="Navegação principal">
   <div class="site-nav-inner">
     <a class="site-brand" href="index.html">Observatório da Educação</a>
@@ -111,13 +125,13 @@ HTML = r"""<main class="paper">
     <div class="act-txt">
       <p class="act-num">O gargalo</p>
       <h2>No Ensino Médio, o fluxo colapsa.</h2>
-      <p>A aprovação que era exemplar no Fundamental (~97%) despenca no Médio: <b>78%</b> em
-        Santa Maria contra <b>95%</b> no Brasil. É o retrato do IDEB de EM da cidade caindo de
-        3,1 (2019) para 2,4 (2023). A distância para o padrão nacional mostra em qual etapa o
-        percurso local perde mais força.</p>
+      <p>Em __APROV_YEAR__, a aprovação no Médio foi de <b>__APROV_SM__%</b> em Santa Maria,
+        abaixo do RS (__APROV_RS__%) e do Brasil (__APROV_BR__%). O IDEB de EM da cidade também
+        caiu de 3,1 (2019) para 2,4 (2023). A distância para as referências mostra em qual etapa
+        o percurso local perde mais força.</p>
     </div>
     <figure class="fig" data-chart data-ind="taxa_aprovacao" data-eta="em"
-      data-ann='[{"niv":"santa_maria","ano":2022,"text":"78%, abaixo de todas as referências","ty":72,"tano":2018},{"niv":"brasil","ano":2025,"text":"Brasil: 95%","ty":90,"tano":2021}]'></figure>
+      data-ann='[]'></figure>
   </article>
 
   <!-- ATO 4 -->
@@ -125,12 +139,12 @@ HTML = r"""<main class="paper">
     <div class="act-txt">
       <p class="act-num">O atraso que acumula</p>
       <h2>Quanto mais longe no caminho, mais alunos ficam para trás.</h2>
-      <p>Distorção idade-série é a fatia de alunos mais velhos que o esperado para a série. Nos
-        anos finais, Santa Maria tem <b>mais</b> atraso (19,8%) que o Brasil (14,4%) e o reduziu
-        mais tarde. A base larga bem; o percurso é que emperra.</p>
+      <p>Distorção idade-série é a fatia de alunos mais velhos que o esperado para a série.
+        Nos anos finais em __TDI_YEAR__, Santa Maria tinha <b>__TDI_SM__%</b>, ante
+        __TDI_RS__% no RS e __TDI_BR__% no Brasil. A base larga bem; o percurso é que emperra.</p>
     </div>
     <figure class="fig" data-chart data-ind="distorcao_idade_serie" data-eta="ef_anos_finais"
-      data-ann='[{"niv":"santa_maria","ano":2024,"text":"19,8%, acima do Brasil","ty":24,"tano":2019}]'></figure>
+      data-ann='[]'></figure>
   </article>
 
   <div class="rule"></div>
@@ -161,16 +175,13 @@ HTML = r"""<main class="paper">
   <footer class="foot">
     <div class="foot-notes">
       <p class="foot-h">Como estes números foram tratados</p>
-      <p>Os dados vêm do INEP via Base dos Dados, e foram auditados célula a célula. A tabela de
-        indicadores da Base dos Dados tem colunas corrompidas na harmonização. A aprovação de EM
-        do RS, por exemplo, aparece entre 4% e 11% em <i>todas</i> as fatias de rede, o que é
-        impossível. A publicação oficial do INEP é pública e consistente; a integração direta
-        desses arquivos é uma evolução planejada. Por enquanto, usamos a Base dos Dados com
-        curadoria explícita: a distorção idade-série só aparece nos anos finais, única série que
-        sobreviveu à auditoria, e o RS fica fora dos recortes frágeis.</p>
+      <p>Rendimento e distorção idade-série vêm diretamente das planilhas oficiais do INEP.
+        O pipeline aceita os formatos históricos XLS e XLSX, valida valores de referência e
+        registra URL, tamanho e SHA-256 de cada arquivo. IDEB e SAEB permanecem no snapshot
+        auditado obtido pela Base dos Dados enquanto a segunda fase da migração é preparada.</p>
     </div>
     <div class="foot-meta">
-      <span>Fonte: INEP · <code>br_inep_ideb</code>, <code>br_inep_indicadores_educacionais</code></span>
+      <span>Fonte: planilhas oficiais do INEP · IDEB/SAEB via <code>br_inep_ideb</code></span>
       <span>Santa Maria/RS · IBGE <code>4316907</code></span>
       <span>IDEB e SAEB: rede pública · demais indicadores: rede total · 2005–2025</span>
       <span class="foot-author">Projeto desenvolvido por <a href="https://github.com/leonardo-michelotti" target="_blank" rel="noopener noreferrer">Leonardo Michelotti</a>. Código e metodologia disponíveis no <a href="https://github.com/leonardo-michelotti/observatorio-educacao-rs" target="_blank" rel="noopener noreferrer">GitHub</a>.</span>
@@ -454,7 +465,7 @@ ARCH_HTML = r"""<main class="paper architecture">
     <p class="act-num">Responsabilidade por camada</p>
     <h2>O dado muda de papel, não apenas de formato.</h2>
     <div class="layer-list">
-      <article class="layer-row"><div class="layer-id"><span>Fonte</span><b>INEP</b></div><div><h3>O que representa</h3><p>Publicações oficiais de IDEB, SAEB, rendimento e indicadores educacionais.</p></div><div><h3>Como acessamos</h3><p>A Base dos Dados harmoniza as tabelas e as disponibiliza no BigQuery.</p></div></article>
+      <article class="layer-row"><div class="layer-id"><span>Fonte</span><b>INEP</b></div><div><h3>O que representa</h3><p>Publicações oficiais de IDEB, SAEB, rendimento e indicadores educacionais.</p></div><div><h3>Como acessamos</h3><p>Rendimento e TDI vêm das planilhas oficiais; IDEB/SAEB usam snapshot auditado da Base dos Dados.</p></div></article>
       <article class="layer-row"><div class="layer-id"><span>Bronze</span><b>Parquet</b></div><div><h3>O que preserva</h3><p>Recortes de Brasil, RS e Santa Maria, separados da lógica analítica.</p></div><div><h3>Contrato</h3><p>A extração é a entrada reproduzível; não recebe regras editoriais.</p></div></article>
       <article class="layer-row"><div class="layer-id"><span>Silver</span><b>staging</b></div><div><h3>O que transforma</h3><p>Normaliza etapas, tipos e nomes; converte indicadores largos para formato tidy.</p></div><div><h3>Onde há curadoria</h3><p>Filtros e exclusões auditadas ficam explícitos em SQL versionado.</p></div></article>
       <article class="layer-row"><div class="layer-id"><span>Gold</span><b>mart</b></div><div><h3>O que entrega</h3><p><code>fct_indicadores</code>, uma linha por indicador, nível, etapa, ano e valor.</p></div><div><h3>Quem consome</h3><p>Os geradores de gráficos e do painel leem apenas esse contrato final.</p></div></article>
@@ -465,7 +476,7 @@ ARCH_HTML = r"""<main class="paper architecture">
     <p class="act-num">Orquestração</p>
     <h2><code>run_pipeline.py</code> encadeia quatro etapas.</h2>
     <ol class="runbook">
-      <li><span>01</span><div><b>Ingestão</b><code>ingestion/extract_bd.py</code><p>Consulta o BigQuery e grava a bronze.</p></div></li>
+      <li><span>01</span><div><b>Ingestão</b><code>ingestion/extract_inep.py</code><p>Baixa as planilhas oficiais e grava a bronze com proveniência.</p></div></li>
       <li><span>02</span><div><b>Transformação e testes</b><code>dbt build</code><p>Materializa staging e mart no DuckDB.</p></div></li>
       <li><span>03</span><div><b>Gráficos</b><code>viz/make_charts.py</code><p>Gera os PNGs usados no README.</p></div></li>
       <li><span>04</span><div><b>Painel</b><code>viz/build_dashboard.py</code><p>Gera as páginas autocontidas para web.</p></div></li>
@@ -480,19 +491,19 @@ ARCH_HTML = r"""<main class="paper architecture">
     <h2>Quatro regras sustentam o que aparece no painel.</h2>
     <div class="rule-grid">
       <article><span>Índice</span><h3>IDEB</h3><p>Combina rendimento com proficiência padronizada a partir do SAEB. Notas por disciplina e aprovação aparecem separadas para revelar os componentes.</p></article>
-      <article><span>Validade</span><h3>Aprovação</h3><p>O pipeline atual mantém valores entre 40% e 100%. A regra trata anomalias conhecidas e permanece documentada como curadoria.</p></article>
-      <article><span>Recorte</span><h3>Distorção idade-série</h3><p>Somente os anos finais do Ensino Fundamental sobreviveram à auditoria célula a célula.</p></article>
+      <article><span>Validade</span><h3>Aprovação</h3><p>O pipeline valida o intervalo físico de 0% a 100% e referências oficiais de 2025.</p></article>
+      <article><span>Recorte</span><h3>Distorção idade-série</h3><p>As três etapas oficiais ficam disponíveis para Brasil, RS e Santa Maria.</p></article>
       <article><span>Solidez</span><h3>Séries comparáveis</h3><p>Uma etapa entra quando dois níveis têm cinco ou mais anos válidos. Só os níveis que cumprem o mínimo são desenhados.</p></article>
     </div>
   </section>
 
   <section class="arch-section quality">
     <p class="act-num">Qualidade e proveniência</p>
-    <h2>A exclusão também é um resultado.</h2>
+    <h2>A origem e cada transformação são verificáveis.</h2>
     <div class="quality-grid">
       <div><h3>O que foi encontrado</h3><p>Há valores incompatíveis na harmonização da Base dos Dados. A publicação oficial do INEP é pública e constitui a referência de origem.</p></div>
-      <div><h3>Como o projeto responde</h3><p>Não interpola nem corrige números manualmente. Aplica filtros explícitos, restringe recortes e documenta as séries removidas.</p></div>
-      <div><h3>Próxima evolução</h3><p>Integrar diretamente os arquivos oficiais do INEP e manter a Base dos Dados como camada comparativa de acesso.</p></div>
+      <div><h3>Como o projeto responde</h3><p>Consome as planilhas oficiais sem interpolar nem corrigir números manualmente e registra hashes dos arquivos.</p></div>
+      <div><h3>Próxima evolução</h3><p>Migrar também IDEB e SAEB para uma fonte oficial direta e eliminar a dependência restante do BigQuery.</p></div>
     </div>
   </section>
 
@@ -726,6 +737,20 @@ def main():
     nested = load_nested()
     data_json = json.dumps(nested, ensure_ascii=False, separators=(",", ":"))
     content = HTML.replace("__DATA__", data_json)
+    aprov_year, aprov = _latest_common(nested, "taxa_aprovacao", "em")
+    tdi_year, tdi = _latest_common(nested, "distorcao_idade_serie", "ef_anos_finais")
+    replacements = {
+        "__APROV_YEAR__": str(aprov_year),
+        "__APROV_SM__": _percent(aprov["santa_maria"]),
+        "__APROV_RS__": _percent(aprov["rs"]),
+        "__APROV_BR__": _percent(aprov["brasil"]),
+        "__TDI_YEAR__": str(tdi_year),
+        "__TDI_SM__": _percent(tdi["santa_maria"]),
+        "__TDI_RS__": _percent(tdi["rs"]),
+        "__TDI_BR__": _percent(tdi["brasil"]),
+    }
+    for marker, value in replacements.items():
+        content = content.replace(marker, value)
     body = _nav("analise") + content
     artifact_body = _nav("analise", "dashboard.html") + content
     arch_body = _nav("arquitetura") + ARCH_HTML

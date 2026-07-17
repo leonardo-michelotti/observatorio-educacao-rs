@@ -239,7 +239,7 @@ thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
     <p class="act-num">Responsabilidade por camada</p>
     <h2>O dado muda de papel, não apenas de formato.</h2>
     <div class="layer-list">
-      <article class="layer-row"><div class="layer-id"><span>Fonte</span><b>INEP</b></div><div><h3>O que representa</h3><p>Publicações oficiais de IDEB, SAEB, rendimento e indicadores educacionais.</p></div><div><h3>Como acessamos</h3><p>A Base dos Dados harmoniza as tabelas e as disponibiliza no BigQuery.</p></div></article>
+      <article class="layer-row"><div class="layer-id"><span>Fonte</span><b>INEP</b></div><div><h3>O que representa</h3><p>Publicações oficiais de IDEB, SAEB, rendimento e indicadores educacionais.</p></div><div><h3>Como acessamos</h3><p>Rendimento e TDI vêm das planilhas oficiais; IDEB/SAEB usam snapshot auditado da Base dos Dados.</p></div></article>
       <article class="layer-row"><div class="layer-id"><span>Bronze</span><b>Parquet</b></div><div><h3>O que preserva</h3><p>Recortes de Brasil, RS e Santa Maria, separados da lógica analítica.</p></div><div><h3>Contrato</h3><p>A extração é a entrada reproduzível; não recebe regras editoriais.</p></div></article>
       <article class="layer-row"><div class="layer-id"><span>Silver</span><b>staging</b></div><div><h3>O que transforma</h3><p>Normaliza etapas, tipos e nomes; converte indicadores largos para formato tidy.</p></div><div><h3>Onde há curadoria</h3><p>Filtros e exclusões auditadas ficam explícitos em SQL versionado.</p></div></article>
       <article class="layer-row"><div class="layer-id"><span>Gold</span><b>mart</b></div><div><h3>O que entrega</h3><p><code>fct_indicadores</code>, uma linha por indicador, nível, etapa, ano e valor.</p></div><div><h3>Quem consome</h3><p>Os geradores de gráficos e do painel leem apenas esse contrato final.</p></div></article>
@@ -250,7 +250,7 @@ thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
     <p class="act-num">Orquestração</p>
     <h2><code>run_pipeline.py</code> encadeia quatro etapas.</h2>
     <ol class="runbook">
-      <li><span>01</span><div><b>Ingestão</b><code>ingestion/extract_bd.py</code><p>Consulta o BigQuery e grava a bronze.</p></div></li>
+      <li><span>01</span><div><b>Ingestão</b><code>ingestion/extract_inep.py</code><p>Baixa as planilhas oficiais e grava a bronze com proveniência.</p></div></li>
       <li><span>02</span><div><b>Transformação e testes</b><code>dbt build</code><p>Materializa staging e mart no DuckDB.</p></div></li>
       <li><span>03</span><div><b>Gráficos</b><code>viz/make_charts.py</code><p>Gera os PNGs usados no README.</p></div></li>
       <li><span>04</span><div><b>Painel</b><code>viz/build_dashboard.py</code><p>Gera as páginas autocontidas para web.</p></div></li>
@@ -265,19 +265,19 @@ thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
     <h2>Quatro regras sustentam o que aparece no painel.</h2>
     <div class="rule-grid">
       <article><span>Índice</span><h3>IDEB</h3><p>Combina rendimento com proficiência padronizada a partir do SAEB. Notas por disciplina e aprovação aparecem separadas para revelar os componentes.</p></article>
-      <article><span>Validade</span><h3>Aprovação</h3><p>O pipeline atual mantém valores entre 40% e 100%. A regra trata anomalias conhecidas e permanece documentada como curadoria.</p></article>
-      <article><span>Recorte</span><h3>Distorção idade-série</h3><p>Somente os anos finais do Ensino Fundamental sobreviveram à auditoria célula a célula.</p></article>
+      <article><span>Validade</span><h3>Aprovação</h3><p>O pipeline valida o intervalo físico de 0% a 100% e referências oficiais de 2025.</p></article>
+      <article><span>Recorte</span><h3>Distorção idade-série</h3><p>As três etapas oficiais ficam disponíveis para Brasil, RS e Santa Maria.</p></article>
       <article><span>Solidez</span><h3>Séries comparáveis</h3><p>Uma etapa entra quando dois níveis têm cinco ou mais anos válidos. Só os níveis que cumprem o mínimo são desenhados.</p></article>
     </div>
   </section>
 
   <section class="arch-section quality">
     <p class="act-num">Qualidade e proveniência</p>
-    <h2>A exclusão também é um resultado.</h2>
+    <h2>A origem e cada transformação são verificáveis.</h2>
     <div class="quality-grid">
       <div><h3>O que foi encontrado</h3><p>Há valores incompatíveis na harmonização da Base dos Dados. A publicação oficial do INEP é pública e constitui a referência de origem.</p></div>
-      <div><h3>Como o projeto responde</h3><p>Não interpola nem corrige números manualmente. Aplica filtros explícitos, restringe recortes e documenta as séries removidas.</p></div>
-      <div><h3>Próxima evolução</h3><p>Integrar diretamente os arquivos oficiais do INEP e manter a Base dos Dados como camada comparativa de acesso.</p></div>
+      <div><h3>Como o projeto responde</h3><p>Consome as planilhas oficiais sem interpolar nem corrigir números manualmente e registra hashes dos arquivos.</p></div>
+      <div><h3>Próxima evolução</h3><p>Migrar também IDEB e SAEB para uma fonte oficial direta e eliminar a dependência restante do BigQuery.</p></div>
     </div>
   </section>
 
