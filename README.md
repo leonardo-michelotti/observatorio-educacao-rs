@@ -136,7 +136,7 @@ gráficos e construção das páginas.
 > **Painel interativo.** Além dos PNGs da vitrine, o pipeline gera uma peça editorial de dados
 > autocontida, com a narrativa "começa forte e perde o passo", gráficos anotados, hover, visão de
 > tabela e tema claro/escuro. O mesmo gerador cria uma segunda página dedicada à arquitetura,
-> metodologia e decisões de curadoria. Saídas de [`viz/build_dashboard.py`](viz/build_dashboard.py):
+> metodologia, qualidade e proveniência. Saídas de [`viz/build_dashboard.py`](viz/build_dashboard.py):
 > [`viz/dashboard.html`](viz/dashboard.html) (abra localmente, pois o GitHub sanitiza JS) e
 > [`viz/arquitetura.html`](viz/arquitetura.html), além de [`public/index.html`](public/index.html)
 > e [`public/arquitetura.html`](public/arquitetura.html), prontos para a web.
@@ -242,20 +242,25 @@ reais, valida as referências oficiais, reconstrói o produto e publica Parquet,
 logs e páginas como artefatos por 14 dias. Quando as páginas mudam, o bot envia uma branch e
 abre um PR; o merge desse PR aciona o deploy normal do Railway.
 
+Esse fluxo não usa a fixture sintética no produto publicado. Para atualizar o site sem consultar
+o BigQuery, ele reconstrói `ideb.parquet` a partir do snapshot real de IDEB/SAEB embutido na
+última página versionada e substitui somente rendimento e TDI pelo histórico oficial recém
+baixado. A fixture continua restrita à CI offline.
+
 ## Estrutura
 
 ```
 ingestion/extract_bd.py   Base dos Dados (BigQuery) → Parquet bronze (IDEB + SAEB)
 ingestion/extract_inep.py planilhas oficiais INEP → Parquet (aprovação + TDI + proveniência)
 ingestion/load_ideb_snapshot.py  painel versionado → snapshot bronze de IDEB/SAEB
-dbt/models/staging/       stg_ideb, stg_indicadores (limpeza + unpivot + curadoria)
+dbt/models/staging/       stg_ideb, stg_indicadores (normalização + unpivot + contratos)
 dbt/models/marts/         fct_indicadores (fato tidy + testes)
 viz/make_charts.py        DuckDB → PNGs em assets/ (vitrine do README)
 viz/build_dashboard.py    DuckDB → páginas autocontidas de análise e arquitetura
 run_pipeline.py           orquestra as quatro etapas
 tests/                    fixtures e testes de integração offline
 .github/workflows/ci.yml  lint, dbt build, geração e testes em push/PR
-.github/workflows/refresh-inep.yml  validação manual com dados oficiais
+.github/workflows/refresh-inep.yml  atualização publicável com dados oficiais via PR
 docs/PESQUISA_FONTES.md   fontes públicas, proveniência e limites de uso
 ```
 
