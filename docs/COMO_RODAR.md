@@ -1,6 +1,11 @@
 # Como rodar
 
-## Pré-requisito (1x): acesso aos dados da Base dos Dados no BigQuery
+## Fontes e pré-requisitos
+
+Taxas de aprovação e distorção idade-série são baixadas diretamente das planilhas públicas
+do INEP e não exigem conta. O BigQuery é necessário apenas para IDEB e SAEB nesta fase.
+
+### Acesso aos dados da Base dos Dados no BigQuery
 
 Os dados vêm da [Base dos Dados](https://basedosdados.org/) (cópia tratada do INEP hospedada no
 BigQuery). Consultar exige um projeto Google Cloud com faturamento configurado. O BigQuery
@@ -37,10 +42,15 @@ python run_pipeline.py
 Isso executa: ingestão (BigQuery → `data/bronze/*.parquet`) → dbt (`dbt build`, silver/gold no
 `data/educacao.duckdb`) → gráficos (`assets/*.png`). Tudo idempotente.
 
+A ingestão primeiro obtém IDEB/SAEB pelo BigQuery e depois obtém os demais indicadores nas
+planilhas oficiais do INEP.
+
 ### Rodar etapas isoladas
 
 ```bash
 python ingestion/extract_bd.py                        # bronze
+python ingestion/extract_inep.py --years 2025        # aprovação/TDI oficiais, um ano
+python ingestion/extract_inep.py                      # aprovação/TDI, histórico completo
 dbt build --project-dir dbt --profiles-dir dbt        # silver/gold + testes
 python viz/make_charts.py                              # gráficos
 ```
@@ -60,3 +70,7 @@ python viz/make_charts.py
 python viz/build_dashboard.py
 python -m pytest
 ```
+
+Os ZIPs ficam em cache sob `data/raw/inep/`. Cada execução gera
+`data/bronze/inep_provenance.json` com URL, SHA-256 e tamanho dos arquivos. Como o servidor do
+INEP pode oscilar, o extrator repete downloads interrompidos e reaproveita ZIPs já validados.

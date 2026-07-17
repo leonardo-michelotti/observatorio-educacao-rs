@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 """Ingestão — Base dos Dados (BigQuery) -> Parquet bronze.
 
-Extrai 3 indicadores (IDEB, taxa de aprovação, distorção idade-série) em 3 níveis
-geográficos (Brasil, RS, Santa Maria) e grava em data/bronze/*.parquet.
+Extrai IDEB e seus componentes SAEB em 3 níveis geográficos (Brasil, RS, Santa Maria) e
+grava em data/bronze/ideb.parquet. Rendimento e TDI vêm diretamente do Inep.
 
 - Fonte IDEB:        basedosdados.br_inep_ideb.{brasil,uf,municipio}         (formato longo)
-- Fonte indicadores: basedosdados.br_inep_indicadores_educacionais.{...}    (formato largo)
-
-O recorte de rede é feito aqui (rede='publica' no IDEB; rede/localizacao='total' nos
-indicadores), com normalização lower() porque a base mistura maiúsculas/minúsculas ao
-longo dos anos. A tidificação (unpivot dos indicadores, união dos níveis) fica no dbt.
+O recorte de rede é feito aqui (`rede='publica'`), com normalização `lower()` porque a base
+mistura maiúsculas/minúsculas ao longo dos anos.
 """
 import os
 from pathlib import Path
@@ -38,13 +35,6 @@ IDEB_COLS = (
     # rendimento) e ver a perda de aprendizagem da pandemia. Ver a metodologia no README.
     "nota_saeb_matematica, nota_saeb_lingua_portuguesa"
 )
-IND_COLS = (
-    "ano, "
-    "taxa_aprovacao_ef_anos_iniciais, taxa_aprovacao_ef_anos_finais, taxa_aprovacao_em, "
-    "tdi_ef_anos_iniciais, tdi_ef_anos_finais, tdi_em"
-)
-
-
 def _client() -> bigquery.Client:
     proj = os.environ.get("BILLING_PROJECT_ID")
     if not proj:
@@ -75,17 +65,7 @@ def main() -> None:
     ideb = _extract(client, "br_inep_ideb", IDEB_COLS, "lower(rede) = 'publica'")
     ideb.to_parquet(BRONZE / "ideb.parquet", index=False)
 
-    print("Indicadores educacionais (aprovação; tdi bruto p/ referência):")
-    ind = _extract(
-        client,
-        "br_inep_indicadores_educacionais",
-        IND_COLS,
-        "lower(rede) = 'total' AND lower(localizacao) = 'total'",
-    )
-    ind.to_parquet(BRONZE / "indicadores.parquet", index=False)
-
-    print(f"\nBronze gravado em {BRONZE} "
-          f"(ideb={len(ideb)} linhas, indicadores={len(ind)} linhas).")
+    print(f"\nBronze IDEB/SAEB gravado em {BRONZE} ({len(ideb)} linhas).")
 
 
 if __name__ == "__main__":

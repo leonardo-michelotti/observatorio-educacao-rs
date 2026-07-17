@@ -1,0 +1,28 @@
+{
+  "2025": {
+    "brasil": {
+      "taxa_aprovacao_ef_anos_iniciais": 98.3,
+      "taxa_aprovacao_ef_anos_finais": 96.2,
+      "taxa_aprovacao_em": 94.8,
+      "tdi_ef_anos_iniciais": 6.6,
+      "tdi_ef_anos_finais": 14.4,
+      "tdi_em": 16.0
+    },
+    "rs": {
+      "taxa_aprovacao_ef_anos_iniciais": 96.9,
+      "taxa_aprovacao_ef_anos_finais": 93.9,
+      "taxa_aprovacao_em": 91.9,
+      "tdi_ef_anos_iniciais": 7.0,
+      "tdi_ef_anos_finais": 17.2,
+      "tdi_em": 18.0
+    },
+    "santa_maria": {
+      "taxa_aprovacao_ef_anos_iniciais": 96.5,
+      "taxa_aprovacao_ef_anos_finais": 91.3,
+      "taxa_aprovacao_em": 88.1,
+      "tdi_ef_anos_iniciais": 6.7,
+      "tdi_ef_anos_finais": 18.2,
+      "tdi_em": 20.9
+    }
+  }
+}

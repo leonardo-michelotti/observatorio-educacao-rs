@@ -4,7 +4,7 @@
 > Parte de dados públicos do INEP, organiza uma arquitetura medalhão local, aplica
 > transformação e testes com dbt e entrega uma narrativa visual publicada na web.
 
-![stack](https://img.shields.io/badge/stack-BigQuery%20%C2%B7%20DuckDB%20%C2%B7%20dbt%20%C2%B7%20matplotlib-blue)
+![stack](https://img.shields.io/badge/stack-INEP%20%C2%B7%20BigQuery%20%C2%B7%20DuckDB%20%C2%B7%20dbt-blue)
 [![CI](https://github.com/leonardo-michelotti/observatorio-educacao-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/leonardo-michelotti/observatorio-educacao-rs/actions/workflows/ci.yml)
 
 **[Abrir a análise](https://observatorio-educacao-rs-production.up.railway.app/)** ·
@@ -17,15 +17,15 @@ fácil de ampliar com novos indicadores e recortes.
 
 ### O que este projeto demonstra
 
-- **Engenharia de dados:** ingestão a partir do BigQuery, bronze em Parquet, transformação com dbt e
-  consumo analítico no DuckDB.
-- **Qualidade:** testes de schema, regras explícitas de validade e curadoria documentada para
-  séries problemáticas.
+- **Engenharia de dados:** ingestão direta das planilhas oficiais do INEP para rendimento e
+  distorção, BigQuery apenas para IDEB/SAEB, bronze em Parquet, dbt e DuckDB.
+- **Qualidade:** testes de schema, regras explícitas de validade, referências oficiais e
+  proveniência verificável por hash.
 - **Produto:** gráficos versionados, painel editorial responsivo e explorador com tabela
   alternativa.
 - **Operação:** execução centralizada em um runner e deploy estático endurecido no Railway,
   sem credenciais ou dados brutos na imagem. A CI reconstrói e testa o pipeline com fixtures
-  sintéticas, sem acessar o BigQuery.
+  sintéticas; uma Action manual valida a ingestão real e preserva sua proveniência.
 - **Evolução:** o fato tidy permite acrescentar indicadores semelhantes sem redesenhar todo o
   fluxo. Novas granularidades, como escola e rede administrativa, têm um caminho claro para
   dimensões próprias.
@@ -115,8 +115,10 @@ vai bem, mas o percurso escolar acumula atraso conforme avança.
 
 ```mermaid
 flowchart LR
-  BQ[Base dos Dados<br/>BigQuery · INEP] --> ING[Ingestão<br/>google-cloud-bigquery]
-  ING --> BRONZE[(Bronze<br/>Parquet)]
+  INEP[INEP<br/>ZIP · XLS/XLSX] --> ING1[Parser oficial<br/>rendimento + TDI]
+  BQ[Base dos Dados<br/>BigQuery] --> ING2[IDEB + SAEB]
+  ING1 --> BRONZE[(Bronze<br/>Parquet + proveniência)]
+  ING2 --> BRONZE
   BRONZE --> DBT[dbt-duckdb<br/>staging · marts + testes]
   DBT --> DUCK[(DuckDB<br/>educacao.duckdb)]
   DUCK --> CHARTS[matplotlib<br/>PNG em assets/]
@@ -127,7 +129,7 @@ flowchart LR
 
 | Camada | Ferramenta |
 |---|---|
-| Ingestão | Python + [`google-cloud-bigquery`](https://cloud.google.com/python/docs/reference/bigquery) (consulta a [Base dos Dados](https://basedosdados.org/)) |
+| Ingestão | Python: downloads oficiais do INEP para rendimento/TDI; [Base dos Dados](https://basedosdados.org/) no BigQuery para IDEB/SAEB |
 | Lakehouse | [DuckDB](https://duckdb.org/) + Parquet (arquitetura medalhão: bronze → silver → gold) |
 | Transformação | [dbt](https://www.getdbt.com/) (`dbt-duckdb`) com testes de schema |
 | Visualização | [matplotlib](https://matplotlib.org/) → PNG versionados no repo |
@@ -161,9 +163,13 @@ atômica, testes de contrato mais amplos e proveniência de cada extração.
 ## Recorte e metodologia
 
 - **Níveis geográficos:** Santa Maria (`4316907`) · Rio Grande do Sul · Brasil.
-- **Fonte:** INEP (`br_inep_ideb`, `br_inep_indicadores_educacionais`) via Base dos Dados no BigQuery.
-- **Indicadores:** IDEB, **notas SAEB** (Matemática/Português, a proficiência que compõe o
-  IDEB), **taxa de aprovação** (o rendimento) e **distorção idade-série** (EF anos finais).
+- **Fonte:** planilhas oficiais do INEP para
+  [taxa de aprovação](https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/indicadores-educacionais/taxas-de-rendimento-escolar/)
+  e [TDI](https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/indicadores-educacionais/taxas-de-distorcao-idade-serie);
+  IDEB/SAEB via
+  `br_inep_ideb` da Base dos Dados no BigQuery.
+- **Indicadores:** IDEB, **notas SAEB** (Matemática/Português), **taxa de aprovação** e
+  **distorção idade-série** nas três etapas: anos iniciais, anos finais e Ensino Médio.
 - **IDEB / SAEB:** rede **pública**, a única comparável nos três níveis no Ensino Fundamental.
 - **Modelo tidy** (`fct_indicadores`): uma linha por `(indicador, nível, etapa, ano, valor)`,
   com **10 testes dbt**: oito testes de schema (`not_null`, `accepted_values`) e dois testes
@@ -174,30 +180,17 @@ atômica, testes de contrato mais amplos e proveniência de cada extração.
 
 ## Notas de qualidade de dados
 
-As decisões abaixo foram tomadas após auditoria célula a célula.
+O erro identificado estava na camada harmonizada, não nas publicações do INEP. Ele está
+registrado na [issue #1430](https://github.com/basedosdados/pipelines/issues/1430), e o
+[PR #1653](https://github.com/basedosdados/pipelines/pull/1653) propõe um teste contra novas
+regressões. Para não depender da correção externa, este projeto agora baixa as planilhas
+oficiais, seleciona semanticamente as colunas e grava URL, hash SHA-256 e tamanho de cada
+arquivo em `data/bronze/inep_provenance.json`.
 
-- **O bug está na camada harmonizada, não na publicação oficial do INEP.** A tabela
-  `br_inep_indicadores_educacionais`
-  tem colunas corrompidas de forma sistemática na harmonização: a aprovação de EM do RS, por
-  exemplo, aparece entre 4% e 11% em **todas** as fatias de rede/localização, um intervalo
-  incompatível com as planilhas oficiais. O problema está registrado na
-  [issue #1430](https://github.com/basedosdados/pipelines/issues/1430), e o
-  [PR #1653](https://github.com/basedosdados/pipelines/pull/1653) propõe um teste contra novas
-  regressões. A integração direta dos arquivos do INEP é um próximo passo; por enquanto,
-  mantemos a Base dos Dados com curadoria explícita.
-  A metodologia e as decisões de curadoria estão na
-  [página de arquitetura](https://observatorio-educacao-rs-production.up.railway.app/arquitetura.html)
-  e nos modelos dbt versionados.
-- **Distorção idade-série: mantida só onde audita limpo.** A corrupção é irregular: RS quebrado
-  até 2022, Santa Maria quebrada nos anos iniciais pós-2020, EM corrompido para todos. A **única
-  série que sobrevive é EF anos finais** (Santa Maria e Brasil suaves; RS só confiável ≥2023, e
-  por isso omitido do gráfico). A curadoria está documentada em
-  [`stg_indicadores.sql`](dbt/models/staging/stg_indicadores.sql).
-- **Ensino médio entra só onde o dado aguenta.** O *IDEB* de EM fica fora (Santa Maria reporta
-  só 2 anos). A *aprovação* de EM entra como **Santa Maria vs Brasil**: o RS é corrompido na
-  origem e cai sozinho pela regra dos gráficos; os pontos corrompidos de SM (2023–24) são
-  removidos por uma heurística de curadoria específica deste projeto (`valor ∈ [40, 100]`).
-  O intervalo reduz anomalias conhecidas, mas não substitui a validação contra a fonte oficial.
+O parser cobre XLS e XLSX e valida valores de referência publicados para 2025. No dbt ficam
+somente contratos físicos (`0 <= valor <= 100`): não há mais filtros criados para mascarar a
+corrupção anterior. IDEB e SAEB continuam temporariamente via BigQuery; removê-lo por completo
+é a próxima etapa isolada da migração.
 
 ## Como rodar
 
@@ -234,6 +227,13 @@ python run_pipeline.py
 
 Ao final: dados em `data/educacao.duckdb`, gráficos em `assets/` e páginas em `public/`.
 
+Para baixar somente os indicadores oficiais, sem Google Cloud:
+
+```bash
+python ingestion/extract_inep.py --years 2025       # teste rápido
+python ingestion/extract_inep.py                    # histórico completo
+```
+
 ### Integração contínua sem credenciais
 
 O workflow [`ci.yml`](.github/workflows/ci.yml) roda em cada push e pull request. Ele cria um
@@ -241,10 +241,15 @@ bronze sintético determinístico, executa `dbt build`, gera os gráficos e as p
 de integração com pytest e preserva os artefatos por sete dias. A consulta real ao BigQuery não
 faz parte da CI e continua protegida por credenciais locais.
 
+O workflow manual [`refresh-inep.yml`](.github/workflows/refresh-inep.yml) exercita os downloads
+reais, valida as referências oficiais, reconstrói o produto e publica Parquet, proveniência,
+logs e páginas como artefatos por 14 dias.
+
 ## Estrutura
 
 ```
-ingestion/extract_bd.py   Base dos Dados (BigQuery) → Parquet bronze (IDEB + SAEB + indicadores)
+ingestion/extract_bd.py   Base dos Dados (BigQuery) → Parquet bronze (IDEB + SAEB)
+ingestion/extract_inep.py planilhas oficiais INEP → Parquet (aprovação + TDI + proveniência)
 dbt/models/staging/       stg_ideb, stg_indicadores (limpeza + unpivot + curadoria)
 dbt/models/marts/         fct_indicadores (fato tidy + testes)
 viz/make_charts.py        DuckDB → PNGs em assets/ (vitrine do README)
@@ -252,9 +257,10 @@ viz/build_dashboard.py    DuckDB → páginas autocontidas de análise e arquite
 run_pipeline.py           orquestra as quatro etapas
 tests/                    fixtures e testes de integração offline
 .github/workflows/ci.yml  lint, dbt build, geração e testes em push/PR
+.github/workflows/refresh-inep.yml  validação manual com dados oficiais
 docs/PESQUISA_FONTES.md   fontes públicas, proveniência e limites de uso
 ```
 
 ---
 
-*Projeto pessoal de portfólio de dados. Fonte: INEP via Base dos Dados. Dados públicos de origem oficial.*
+*Projeto pessoal de portfólio de dados. Fonte: INEP e Base dos Dados. Dados públicos de origem oficial.*

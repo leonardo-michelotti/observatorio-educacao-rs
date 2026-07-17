@@ -1,0 +1,10 @@
+{
+  "rendimento": {
+    "years": [2007, 2025],
+    "page": "https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/indicadores-educacionais/taxas-de-rendimento-escolar/{year}"
+  },
+  "tdi": {
+    "years": [2006, 2025],
+    "page": "https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/indicadores-educacionais/taxas-de-distorcao-idade-serie/{year}"
+  }
+}

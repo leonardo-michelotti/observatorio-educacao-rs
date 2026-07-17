@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Runner do pipeline Observatório da Educação RS.
 
-Encadeia: ingestão (BigQuery/Base dos Dados -> Parquet bronze) -> dbt (silver/gold no DuckDB)
--> gráficos (PNG em assets/). Cada etapa é idempotente. dbt é sempre invocado da raiz do repo.
+Encadeia IDEB/SAEB via BigQuery e indicadores diretamente do Inep, depois dbt, gráficos e
+páginas. Cada etapa é idempotente. dbt é sempre invocado da raiz do repo.
 """
 import os
 import subprocess
@@ -22,6 +22,8 @@ def run(cmd):
 
 def step_ingest():
     run([sys.executable, "ingestion/extract_bd.py"])
+    # Rendimento e TDI usam a publicação oficial, sem a camada harmonizada intermediária.
+    run([sys.executable, "ingestion/extract_inep.py"])
 
 
 def step_dbt():
