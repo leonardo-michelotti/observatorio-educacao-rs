@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Dashboard — lê o fato tidy (DuckDB) e gera uma peça editorial de dados, autocontida.
 
-Não é um "explorador de indicadores": é um artigo que conta um fio condutor — Santa Maria
-começa forte no Ensino Fundamental e perde o passo conforme o aluno avança. Segue princípios
+Não é um "explorador de indicadores": é um artigo que conta um fio condutor — a distância
+entre Santa Maria e as referências aumenta conforme as etapas avançam. Segue princípios
 de data-journalism (cor como atenção seletiva: Santa Maria em destaque, RS/Brasil em cinza;
 anotação direta na linha; a escolha do gráfico é a narrativa). Dados embutidos inline (o
 Artifact/CSP bloqueia rede). O explorador interativo fica no fim, como ferramenta secundária.
@@ -69,11 +69,11 @@ HTML = r"""<main class="paper">
 
   <header class="masthead">
     <p class="kicker">Observatório da educação básica · indicadores oficiais · Santa Maria / RS</p>
-    <h1 class="headline">Santa Maria começa forte<br>e vai perdendo o passo</h1>
-    <p class="standfirst">Nos anos iniciais, a cidade acompanha o Brasil e o Rio Grande do Sul.
-      Aí o caminho encompridado revela suas rachaduras: o atraso se acumula, a aprendizagem
-      leva um baque que a aprovação disfarça, e o Ensino Médio vira um abismo. Vinte anos de
-      dados oficiais do INEP, lidos de ponta a ponta.</p>
+    <h1 class="headline">A distância aumenta<br>ao longo do percurso</h1>
+    <p class="standfirst">Nos anos iniciais, Santa Maria permanece próxima do Brasil e do Rio
+      Grande do Sul. Nas etapas seguintes, as diferenças de aprovação e atraso escolar se
+      ampliam. Vinte anos de dados oficiais do INEP mostram tanto a melhora recente quanto o
+      desafio que permanece no Ensino Médio.</p>
     <button id="theme" class="theme-btn" type="button" aria-label="Alternar tema">tema</button>
   </header>
 
@@ -86,9 +86,9 @@ HTML = r"""<main class="paper">
     <figure class="fig fig-hero">
       <svg id="traj" viewBox="0 0 860 360" role="img" aria-label="Trajetória do IDEB de Santa Maria por etapa em 2023"></svg>
     </figure>
-    <p class="hero-caption">A curva do Brasil também cai; o gargalo do Ensino Médio é nacional.
-      Mas a de Santa Maria <b>despenca</b>: um 5,8 de primeiro da turma nos anos iniciais vira um
-      <b>2,4</b> no Médio, quando a média nacional ainda segura 4,1.</p>
+    <p class="hero-caption">A comparação entre etapas não acompanha a mesma turma, mas revela um
+      contraste importante: Santa Maria marca <b>5,8</b> nos anos iniciais e <b>2,4</b> no Médio,
+      enquanto o Brasil registra 5,7 e 4,1, respectivamente.</p>
   </section>
 
   <div class="rule"></div>
@@ -97,10 +97,11 @@ HTML = r"""<main class="paper">
   <article class="act">
     <div class="act-txt">
       <p class="act-num">Anos iniciais</p>
-      <h2>A base é sólida e melhorou muito.</h2>
+      <h2>Na base, a cidade permanece próxima das referências.</h2>
       <p>Entre 2005 e 2023, o IDEB dos anos iniciais de Santa Maria saltou de 4,3 para
-        <b>5,8</b>. Hoje empata com o Rio Grande do Sul e passa o Brasil. É a parte da história
-        em que a cidade tem do que se orgulhar.</p>
+        <b>5,8</b>. No último ano, empatou com o Rio Grande do Sul e ficou um décimo acima do
+        Brasil. O indicador mostra uma base comparável às referências, sem explicar sozinho
+        o que acontece nas etapas seguintes.</p>
     </div>
     <figure class="fig" data-chart data-ind="ideb" data-eta="ef_anos_iniciais"
       data-ann='[{"niv":"santa_maria","ano":2005,"text":"4,3 em 2005","ty":4.65,"tano":2005},{"niv":"santa_maria","ano":2023,"text":"5,8: empata com o RS e supera o Brasil","ty":5.35,"tano":2018}]'></figure>
@@ -123,12 +124,13 @@ HTML = r"""<main class="paper">
   <!-- ATO 3 -->
   <article class="act">
     <div class="act-txt">
-      <p class="act-num">O gargalo</p>
-      <h2>No Ensino Médio, o fluxo colapsa.</h2>
-      <p>Em __APROV_YEAR__, a aprovação no Médio foi de <b>__APROV_SM__%</b> em Santa Maria,
-        abaixo do RS (__APROV_RS__%) e do Brasil (__APROV_BR__%). O IDEB de EM da cidade também
-        caiu de 3,1 (2019) para 2,4 (2023). A distância para as referências mostra em qual etapa
-        o percurso local perde mais força.</p>
+      <p class="act-num">A diferença entre etapas</p>
+      <h2>A distância de aprovação cresce no Ensino Médio.</h2>
+      <p>Em __APROV_YEAR__, Santa Maria ficou __APROV_GAP_AI__ pontos percentuais abaixo do Brasil
+        nos anos iniciais, __APROV_GAP_AF__ nos finais e __APROV_GAP_EM__ no Médio. Nessa última
+        etapa, a cidade registrou <b>__APROV_SM__%</b>, ante __APROV_RS__% no RS e
+        __APROV_BR__% no país. É uma diferença relevante, embora o resultado local tenha
+        melhorado desde 2019.</p>
     </div>
     <figure class="fig" data-chart data-ind="taxa_aprovacao" data-eta="em"
       data-ann='[]'></figure>
@@ -137,11 +139,12 @@ HTML = r"""<main class="paper">
   <!-- ATO 4 -->
   <article class="act">
     <div class="act-txt">
-      <p class="act-num">O atraso que acumula</p>
-      <h2>Quanto mais longe no caminho, mais alunos ficam para trás.</h2>
-      <p>Distorção idade-série é a fatia de alunos mais velhos que o esperado para a série.
-        Nos anos finais em __TDI_YEAR__, Santa Maria tinha <b>__TDI_SM__%</b>, ante
-        __TDI_RS__% no RS e __TDI_BR__% no Brasil. A base larga bem; o percurso é que emperra.</p>
+      <p class="act-num">O atraso escolar</p>
+      <h2>A diferença é pequena na base e maior nas etapas seguintes.</h2>
+      <p>Em __TDI_YEAR__, a TDI de Santa Maria estava praticamente alinhada ao Brasil nos anos
+        iniciais (__TDI_AI_SM__% contra __TDI_AI_BR__%). Nos anos finais, passou a
+        <b>__TDI_AF_SM__%</b> contra __TDI_AF_BR__%; no Médio, chegou a __TDI_EM_SM__% contra
+        __TDI_EM_BR__%. A TDI local caiu desde 2019, mas menos que nas duas referências.</p>
     </div>
     <figure class="fig" data-chart data-ind="distorcao_idade_serie" data-eta="ef_anos_finais"
       data-ann='[]'></figure>
@@ -737,17 +740,40 @@ def main():
     nested = load_nested()
     data_json = json.dumps(nested, ensure_ascii=False, separators=(",", ":"))
     content = HTML.replace("__DATA__", data_json)
-    aprov_year, aprov = _latest_common(nested, "taxa_aprovacao", "em")
-    tdi_year, tdi = _latest_common(nested, "distorcao_idade_serie", "ef_anos_finais")
+    aprov_by_stage = {
+        stage: _latest_common(nested, "taxa_aprovacao", stage)
+        for stage in ("ef_anos_iniciais", "ef_anos_finais", "em")
+    }
+    tdi_by_stage = {
+        stage: _latest_common(nested, "distorcao_idade_serie", stage)
+        for stage in ("ef_anos_iniciais", "ef_anos_finais", "em")
+    }
+    aprov_year, aprov = aprov_by_stage["em"]
+    tdi_year, _ = tdi_by_stage["em"]
+
+    def gap(values):
+        return _percent(values["brasil"] - values["santa_maria"])
+
+    aprov_ai = aprov_by_stage["ef_anos_iniciais"][1]
+    aprov_af = aprov_by_stage["ef_anos_finais"][1]
+    tdi_ai = tdi_by_stage["ef_anos_iniciais"][1]
+    tdi_af = tdi_by_stage["ef_anos_finais"][1]
+    tdi_em = tdi_by_stage["em"][1]
     replacements = {
         "__APROV_YEAR__": str(aprov_year),
         "__APROV_SM__": _percent(aprov["santa_maria"]),
         "__APROV_RS__": _percent(aprov["rs"]),
         "__APROV_BR__": _percent(aprov["brasil"]),
+        "__APROV_GAP_AI__": gap(aprov_ai),
+        "__APROV_GAP_AF__": gap(aprov_af),
+        "__APROV_GAP_EM__": gap(aprov),
         "__TDI_YEAR__": str(tdi_year),
-        "__TDI_SM__": _percent(tdi["santa_maria"]),
-        "__TDI_RS__": _percent(tdi["rs"]),
-        "__TDI_BR__": _percent(tdi["brasil"]),
+        "__TDI_AI_SM__": _percent(tdi_ai["santa_maria"]),
+        "__TDI_AI_BR__": _percent(tdi_ai["brasil"]),
+        "__TDI_AF_SM__": _percent(tdi_af["santa_maria"]),
+        "__TDI_AF_BR__": _percent(tdi_af["brasil"]),
+        "__TDI_EM_SM__": _percent(tdi_em["santa_maria"]),
+        "__TDI_EM_BR__": _percent(tdi_em["brasil"]),
     }
     for marker, value in replacements.items():
         content = content.replace(marker, value)
@@ -759,11 +785,11 @@ def main():
     )
     style = f"<style>\n{CSS}\n</style>"
     title = "Observatório da Educação — Santa Maria/RS"
-    desc = ("Vinte anos de dado do INEP: Santa Maria começa forte na educação básica e vai "
-            "perdendo o passo. IDEB, SAEB, aprovação e distorção idade-série.")
+    desc = ("Vinte anos de dados do INEP mostram como a distância entre Santa Maria e as "
+            "referências aumenta ao longo das etapas. IDEB, SAEB, aprovação e TDI.")
     arch_title = "Arquitetura e metodologia — Observatório da Educação"
     arch_desc = ("Arquitetura do pipeline: INEP, Base dos Dados, BigQuery, Parquet, dbt, "
-                 "DuckDB, testes, curadoria e visualização.")
+                 "DuckDB, testes, proveniência e visualização.")
 
     # 1) versão Artifact (só conteúdo; o harness embrulha em <html>/<head>/<body>)
     OUT.write_text(f"<title>{title}</title>\n{style}\n{artifact_body}", encoding="utf-8")

@@ -34,10 +34,11 @@ fácil de ampliar com novos indicadores e recortes.
 1. **A aprendizagem caiu no período da pandemia, mas o IDEB amorteceu o movimento.** Separando
    o índice em proficiência (SAEB) e rendimento (aprovação), vê-se que a proficiência caiu de
    2019 para 2021 enquanto a aprovação subiu.
-2. **Santa Maria vai bem no Fundamental, mas patina no resto.** A distorção idade-série da
-   cidade (18,2%) é maior que a do Brasil (14,4%) nos anos finais, comparando 2025.
-3. **O Ensino Médio é o gargalo.** A aprovação de EM de Santa Maria (88,1%) fica abaixo
-   do RS (91,9%) e do Brasil (94,8%) em 2025; o IDEB de EM caiu de 3,1 (2019) para 2,4 (2023).
+2. **A distância aumenta conforme a etapa avança.** Em 2025, a aprovação de Santa Maria fica
+   1,8 ponto percentual abaixo do Brasil nos anos iniciais, 4,9 nos finais e 6,7 no Ensino Médio.
+3. **Houve melhora no fluxo, mas o Ensino Médio ainda concentra a maior diferença.** Entre
+   2019 e 2025, a TDI do EM da cidade caiu de 27,8% para 20,9%; no último ano, ainda ficou
+   acima do RS (18,0%) e do Brasil (16,0%).
 
 ---
 
@@ -92,18 +93,20 @@ e Brasil: Matemática **266,8** e Português **269,5**.
 | EF · Anos finais (2025) | **91,3%** | 93,9% | 96,2% |
 | Ensino médio (2025) | **88,1%** | 91,9% | 94,8% |
 
-Em 2025, Santa Maria fica abaixo de RS e Brasil nas três etapas. A diferença é maior no
-Ensino Médio: 88,1% na cidade, ante 91,9% no estado e 94,8% no país. O resultado é coerente
-com o IDEB de EM da cidade (2,4 em 2023) e aponta a etapa onde ainda há mais a ganhar.
+Em 2025, Santa Maria fica abaixo de RS e Brasil nas três etapas. A diferença para o país
+cresce ao longo do percurso: 1,8 ponto percentual nos anos iniciais, 4,9 nos finais e 6,7 no
+Ensino Médio. O resultado é coerente com o IDEB de EM da cidade (2,4 em 2023), mas não apaga
+a melhora recente: a aprovação do EM local subiu de 78,6% em 2019 para 88,1% em 2025.
 
-### Distorção idade-série — EF anos finais
+### Distorção idade-série — Ensino Fundamental e Médio
 
 ![Distorção idade-série — Santa Maria vs RS vs Brasil](assets/distorcao_idade_serie.png)
 
-Com a fonte oficial direta, as três etapas e os três níveis voltam à vitrine. Em 2025, nos
-anos finais, Santa Maria registra **18,2%**, acima do RS (**17,2%**) e do Brasil (**14,4%**).
-O Ensino Médio também permanece acima das referências: **20,9%** na cidade, 18,0% no estado e
-16,0% no país. A base larga melhor; o atraso se acumula conforme o percurso avança.
+Com a fonte oficial direta, as três etapas e os três níveis voltam à vitrine. Em 2025, Santa
+Maria está praticamente alinhada ao Brasil nos anos iniciais (6,7% contra 6,6%). A diferença
+abre nos anos finais (18,2% contra 14,4%) e chega a 4,9 pontos no Ensino Médio (20,9% contra
+16,0%). Houve melhora: desde 2019, a TDI do EM local caiu 6,9 pontos. Ainda assim, a queda foi
+menor que no RS e no Brasil, e a cidade terminou 2025 acima das duas referências.
 
 ---
 
@@ -134,7 +137,7 @@ O runner [`run_pipeline.py`](run_pipeline.py) encadeia ingestão, `dbt build`, g
 gráficos e construção das páginas.
 
 > **Painel interativo.** Além dos PNGs da vitrine, o pipeline gera uma peça editorial de dados
-> autocontida, com a narrativa "começa forte e perde o passo", gráficos anotados, hover, visão de
+> autocontida, com a narrativa "a distância aumenta ao longo do percurso", gráficos anotados, hover, visão de
 > tabela e tema claro/escuro. O mesmo gerador cria uma segunda página dedicada à arquitetura,
 > metodologia, qualidade e proveniência. Saídas de [`viz/build_dashboard.py`](viz/build_dashboard.py):
 > [`viz/dashboard.html`](viz/dashboard.html) (abra localmente, pois o GitHub sanitiza JS) e

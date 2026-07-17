@@ -68,4 +68,6 @@ def test_artefatos_publicaveis_foram_gerados():
     assert "const DATA =" in painel
     assert "__APROV_" not in painel and "__TDI_" not in painel
     assert "planilhas oficiais do INEP" in painel
+    assert "A distância aumenta" in painel
+    assert "fluxo colapsa" not in painel
     assert arquivos[2].read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
