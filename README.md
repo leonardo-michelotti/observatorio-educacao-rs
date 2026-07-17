@@ -114,11 +114,12 @@ menor que no RS e no Brasil, e a cidade terminou 2025 acima das duas referência
 
 ```mermaid
 flowchart LR
-  INEP[INEP<br/>ZIP · XLS/XLSX] --> ING1[Parser oficial<br/>rendimento + TDI]
-  BQ[Base dos Dados<br/>BigQuery] --> ING2[IDEB + SAEB]
-  ING1 --> BRONZE[(Bronze<br/>Parquet + proveniência)]
-  ING2 --> BRONZE
-  BRONZE --> DBT[dbt-duckdb<br/>staging · marts + testes]
+  INEP[INEP<br/>ZIP · XLS/XLSX] --> ING1[Parser direto<br/>aprovação + TDI]
+  BD[Base dos Dados] --> BQ[BigQuery<br/>IDEB + SAEB]
+  ING1 --> BRONZE1[(Bronze indicadores<br/>Parquet + proveniência)]
+  BQ --> BRONZE2[(Bronze IDEB<br/>Parquet)]
+  BRONZE1 --> DBT[dbt-duckdb<br/>staging · mart + testes]
+  BRONZE2 --> DBT
   DBT --> DUCK[(DuckDB<br/>educacao.duckdb)]
   DUCK --> CHARTS[matplotlib<br/>PNG em assets/]
   DUCK --> PAGES[HTML autocontido<br/>análise + arquitetura]
@@ -128,13 +129,15 @@ flowchart LR
 
 | Camada | Ferramenta |
 |---|---|
-| Ingestão | Python: downloads oficiais do INEP para rendimento/TDI; [Base dos Dados](https://basedosdados.org/) no BigQuery para IDEB/SAEB |
+| Ingestão | Python: downloads oficiais do INEP para aprovação/TDI; [Base dos Dados](https://basedosdados.org/) no BigQuery para IDEB/SAEB |
 | Lakehouse | [DuckDB](https://duckdb.org/) + Parquet (arquitetura medalhão: bronze → silver → gold) |
-| Transformação | [dbt](https://www.getdbt.com/) (`dbt-duckdb`) com testes de schema |
-| Visualização | [matplotlib](https://matplotlib.org/) → PNG versionados no repo |
+| Transformação | [dbt](https://www.getdbt.com/) (`dbt-duckdb`) com testes de schema e testes singulares |
+| Publicação | [matplotlib](https://matplotlib.org/) para PNG; HTML autocontido servido por Caddy no Railway |
 
 O runner [`run_pipeline.py`](run_pipeline.py) encadeia ingestão, `dbt build`, geração dos
-gráficos e construção das páginas.
+gráficos e construção das páginas. A bronze separa a captura externa das regras analíticas;
+staging padroniza tipos e categorias; o mart `fct_indicadores` entrega um único contrato para
+todos os produtos.
 
 > **Painel interativo.** Além dos PNGs da vitrine, o pipeline gera uma peça editorial de dados
 > autocontida, com a narrativa "a distância aumenta ao longo do percurso", gráficos anotados, hover, visão de
@@ -148,34 +151,40 @@ gráficos e construção das páginas.
 > deploy no [Railway](https://railway.app/) com HTTPS, sem incluir credenciais ou dados brutos
 > na imagem. Passo a passo em [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
-### Escopo atual e caminho de evolução
+### Decisões e limites da arquitetura
 
-Esta é uma arquitetura deliberadamente simples, adequada ao volume e à frequência atuais. Ela
-está fechada como produto de portfólio: dados, transformação, testes, documentação, visualização
-e deploy fazem parte do mesmo fluxo.
+Esta é uma arquitetura local e deliberadamente simples, adequada ao volume e à frequência do
+projeto. Parquet preserva as entradas, DuckDB executa a transformação analítica sem servidor e
+o Git registra código, SQL, testes, documentação e produtos publicados.
 
-Para crescer dentro do recorte atual, um novo indicador passa por ingestão, staging, mart,
-testes e registro na visualização. Se o projeto avançar para escolas, múltiplas redes, mais
-fontes ou atualizações frequentes, a evolução natural inclui dimensões explícitas, ingestão
-atômica, testes de contrato mais amplos e proveniência de cada extração.
+A atualização oficial pode rodar sem uma nova consulta ao BigQuery: o workflow reutiliza o
+snapshot auditado de IDEB/SAEB embutido no painel versionado e atualiza aprovação/TDI diretamente
+do INEP. Isso mantém o processo reproduzível, mas não elimina a dependência de origem: migrar
+IDEB/SAEB para arquivos oficiais diretos continua sendo a evolução prevista.
 
-## Recorte e metodologia
+## Metodologia
 
-- **Níveis geográficos:** Santa Maria (`4316907`) · Rio Grande do Sul · Brasil.
-- **Fonte:** planilhas oficiais do INEP para
+- **Pergunta analítica:** como os indicadores agregados de Santa Maria evoluem e como se
+  comparam, em cada etapa, com Rio Grande do Sul e Brasil?
+- **Recorte geográfico:** Santa Maria (`4316907`) · Rio Grande do Sul · Brasil.
+- **Fontes:** planilhas oficiais do INEP para
   [taxa de aprovação](https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/indicadores-educacionais/taxas-de-rendimento-escolar/)
   e [TDI](https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/indicadores-educacionais/taxas-de-distorcao-idade-serie);
-  IDEB/SAEB via
-  `br_inep_ideb` da Base dos Dados no BigQuery.
-- **Indicadores:** IDEB, **notas SAEB** (Matemática/Português), **taxa de aprovação** e
-  **distorção idade-série** nas três etapas: anos iniciais, anos finais e Ensino Médio.
-- **IDEB / SAEB:** rede **pública**, a única comparável nos três níveis no Ensino Fundamental.
+  IDEB e SAEB via `br_inep_ideb` da Base dos Dados no BigQuery.
+- **Períodos disponíveis:** IDEB/SAEB de 2005 a 2023, nas edições da avaliação; aprovação de
+  2007 a 2025; TDI de 2006 a 2025.
+- **Indicadores e etapas:** IDEB, notas SAEB de Matemática e Língua Portuguesa, aprovação e
+  distorção idade-série; anos iniciais, anos finais e Ensino Médio.
+- **Rede:** IDEB/SAEB usam a rede **pública**, recorte comum aos três níveis analisados.
 - **Modelo tidy** (`fct_indicadores`): uma linha por `(indicador, nível, etapa, ano, valor)`,
   com **10 testes dbt**: oito testes de schema (`not_null`, `accepted_values`) e dois testes
   singulares para unicidade do grão e faixas físicas dos indicadores.
-- **Regra dos gráficos:** cada etapa é renderizada se tiver **pelo menos 2 séries sólidas**
-  (≥5 anos), plotando só as que passam. Por isso o IDEB de EM fica de fora (série curta) mas a
-  distorção aparece como Santa Maria vs Brasil.
+- **Regra de exibição:** uma etapa é renderizada se pelo menos dois níveis têm cinco ou mais
+  anos válidos; somente as séries que cumprem esse mínimo são desenhadas.
+- **Regra de leitura:** cada etapa é um recorte agregado diferente. Comparar anos iniciais,
+  finais e Ensino Médio não equivale a acompanhar a mesma turma ao longo do tempo.
+- **Limite de inferência:** as associações do painel são descritivas. Elas não demonstram
+  causalidade, desempenho individual nem o efeito isolado de uma política pública.
 
 ## Notas de qualidade de dados
 
@@ -186,10 +195,11 @@ regressões. Para não depender da correção externa, este projeto agora baixa 
 oficiais, seleciona semanticamente as colunas e grava URL, hash SHA-256 e tamanho de cada
 arquivo em `data/bronze/inep_provenance.json`.
 
-O parser cobre XLS e XLSX e valida valores de referência publicados para 2025. No dbt ficam
-somente contratos físicos (`0 <= valor <= 100`): não há mais filtros criados para mascarar a
-corrupção anterior. IDEB e SAEB continuam temporariamente via BigQuery; removê-lo por completo
-é a próxima etapa isolada da migração.
+O parser cobre XLS e XLSX, exige uma única coluna semântica por etapa e valida referências
+oficiais publicadas para 2025. O dbt verifica campos obrigatórios, categorias aceitas, grão
+único e faixas físicas (`0 <= valor <= 100`). Não há interpolação nem correção manual dos
+números. IDEB e SAEB continuam temporariamente via BigQuery; removê-lo por completo é a próxima
+etapa isolada da migração.
 
 ## Como rodar
 

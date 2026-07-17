@@ -442,75 +442,76 @@ addEventListener("resize",()=>{ drawTrajectory(); drawNarrative(); if(!tableOpen
 
 ARCH_HTML = r"""<main class="paper architecture">
   <header class="arch-head">
-    <p class="kicker">Engenharia de dados · decisões reproduzíveis</p>
+    <p class="kicker">Engenharia de dados · fontes, contratos e limites</p>
     <h1 class="headline">Arquitetura<br>e metodologia</h1>
-    <p class="standfirst">Do dado público do INEP à narrativa visual. Esta página abre as
-      camadas do projeto, mostra onde cada decisão acontece e registra o que entra, o que fica
-      de fora e por quê.</p>
+    <p class="standfirst">Do arquivo publicado pelo INEP ao gráfico final. Esta página separa
+      origem, processamento e interpretação para que cada número possa ser reproduzido — e para
+      que os limites da comparação permaneçam visíveis.</p>
     <button id="theme" class="theme-btn" type="button" aria-label="Alternar tema" aria-pressed="false">tema</button>
   </header>
 
   <section class="arch-section">
     <p class="act-num">Visão do sistema</p>
-    <h2>Um caminho único, com responsabilidades separadas.</h2>
-    <p class="section-lede">A arquitetura medalhão é lógica: bronze, staging e mart vivem no
-      mesmo projeto local, mas cada camada tem um contrato diferente.</p>
+    <h2>Duas rotas de entrada, um contrato analítico.</h2>
+    <p class="section-lede">Aprovação e distorção idade-série vêm das planilhas anuais do INEP.
+      IDEB e SAEB ainda chegam pela tabela harmonizada da Base dos Dados no BigQuery. Depois da
+      extração, as duas rotas seguem o mesmo fluxo local.</p>
     <div class="system-map" role="img" aria-label="Fluxo dos dados do INEP até o painel">
-      <article><span>01 · Origem</span><h3>INEP</h3><p>Indicadores públicos oficiais</p></article>
-      <article><span>02 · Acesso</span><h3>Base dos Dados</h3><p>Tabelas no BigQuery</p></article>
-      <article><span>03 · Bronze</span><h3>Parquet</h3><p>Extração local preservada</p></article>
-      <article><span>04 · Silver e gold</span><h3>dbt + DuckDB</h3><p>Curadoria, modelo e testes</p></article>
-      <article><span>05 · Produto</span><h3>PNG + HTML</h3><p>Narrativa e explorador</p></article>
+      <article><span>01 · Fonte direta</span><h3>INEP</h3><p>ZIP e planilhas de rendimento e TDI</p></article>
+      <article><span>02 · Acesso auxiliar</span><h3>BigQuery</h3><p>IDEB e SAEB harmonizados pela Base dos Dados</p></article>
+      <article><span>03 · Entrada local</span><h3>Parquet</h3><p>Bronze separado da regra analítica</p></article>
+      <article><span>04 · Modelo</span><h3>dbt + DuckDB</h3><p>Staging, mart e testes</p></article>
+      <article><span>05 · Publicação</span><h3>PNG + HTML</h3><p>README e site estático</p></article>
     </div>
   </section>
 
   <section class="arch-section">
     <p class="act-num">Responsabilidade por camada</p>
-    <h2>O dado muda de papel, não apenas de formato.</h2>
+    <h2>Cada camada responde a uma pergunta.</h2>
     <div class="layer-list">
-      <article class="layer-row"><div class="layer-id"><span>Fonte</span><b>INEP</b></div><div><h3>O que representa</h3><p>Publicações oficiais de IDEB, SAEB, rendimento e indicadores educacionais.</p></div><div><h3>Como acessamos</h3><p>Rendimento e TDI vêm das planilhas oficiais; IDEB/SAEB usam snapshot auditado da Base dos Dados.</p></div></article>
-      <article class="layer-row"><div class="layer-id"><span>Bronze</span><b>Parquet</b></div><div><h3>O que preserva</h3><p>Recortes de Brasil, RS e Santa Maria, separados da lógica analítica.</p></div><div><h3>Contrato</h3><p>A extração é a entrada reproduzível; não recebe regras editoriais.</p></div></article>
-      <article class="layer-row"><div class="layer-id"><span>Silver</span><b>staging</b></div><div><h3>O que transforma</h3><p>Normaliza etapas, tipos e nomes; converte indicadores largos para formato tidy.</p></div><div><h3>Onde há curadoria</h3><p>Filtros e exclusões auditadas ficam explícitos em SQL versionado.</p></div></article>
-      <article class="layer-row"><div class="layer-id"><span>Gold</span><b>mart</b></div><div><h3>O que entrega</h3><p><code>fct_indicadores</code>, uma linha por indicador, nível, etapa, ano e valor.</p></div><div><h3>Quem consome</h3><p>Os geradores de gráficos e do painel leem apenas esse contrato final.</p></div></article>
+      <article class="layer-row"><div class="layer-id"><span>Origem</span><b>fontes</b></div><div><h3>O que entra</h3><p>Arquivos oficiais para aprovação/TDI e tabelas harmonizadas para IDEB/SAEB.</p></div><div><h3>O que registramos</h3><p>URL, ano, escopo, tamanho e SHA-256 dos arquivos baixados diretamente do INEP.</p></div></article>
+      <article class="layer-row"><div class="layer-id"><span>Bronze</span><b>Parquet</b></div><div><h3>O que preserva</h3><p>Somente Brasil, RS e Santa Maria, ainda sem regras de apresentação.</p></div><div><h3>Por que existe</h3><p>Desacopla downloads e consultas externas das transformações reproduzíveis.</p></div></article>
+      <article class="layer-row"><div class="layer-id"><span>Silver</span><b>staging</b></div><div><h3>O que padroniza</h3><p>Nomes, tipos, níveis e etapas; converte colunas de indicadores para formato longo.</p></div><div><h3>Onde está a regra</h3><p>SQL versionado no dbt, sem correção manual ou interpolação de valores.</p></div></article>
+      <article class="layer-row"><div class="layer-id"><span>Gold</span><b>mart</b></div><div><h3>O que entrega</h3><p><code>fct_indicadores</code>: indicador, nível, etapa, ano e valor.</p></div><div><h3>Quem consome</h3><p>Gráficos e páginas leem o mesmo fato analítico testado.</p></div></article>
     </div>
   </section>
 
   <section class="arch-section">
     <p class="act-num">Orquestração</p>
-    <h2><code>run_pipeline.py</code> encadeia quatro etapas.</h2>
+    <h2><code>run_pipeline.py</code> recompõe o produto de ponta a ponta.</h2>
     <ol class="runbook">
-      <li><span>01</span><div><b>Ingestão</b><code>ingestion/extract_inep.py</code><p>Baixa as planilhas oficiais e grava a bronze com proveniência.</p></div></li>
-      <li><span>02</span><div><b>Transformação e testes</b><code>dbt build</code><p>Materializa staging e mart no DuckDB.</p></div></li>
-      <li><span>03</span><div><b>Gráficos</b><code>viz/make_charts.py</code><p>Gera os PNGs usados no README.</p></div></li>
-      <li><span>04</span><div><b>Painel</b><code>viz/build_dashboard.py</code><p>Gera as páginas autocontidas para web.</p></div></li>
+      <li><span>01</span><div><b>Ingestão</b><code>extract_bd.py + extract_inep.py</code><p>Obtém os dois grupos de indicadores e materializa a bronze local.</p></div></li>
+      <li><span>02</span><div><b>Transformação e testes</b><code>dbt build</code><p>Cria staging e mart no DuckDB e valida o contrato.</p></div></li>
+      <li><span>03</span><div><b>Gráficos</b><code>viz/make_charts.py</code><p>Gera os PNGs versionados usados no README.</p></div></li>
+      <li><span>04</span><div><b>Páginas</b><code>viz/build_dashboard.py</code><p>Gera análise, arquitetura e snapshot analítico autocontido.</p></div></li>
     </ol>
-    <p class="method-note">Cada execução recompõe os produtos pelas mesmas regras. Código,
-      SQL, testes, documentação e saídas publicadas são rastreados no Git. O dbt registra a
-      dependência entre modelos por meio de <code>ref()</code>.</p>
+    <p class="method-note">Na atualização oficial sem BigQuery, <code>load_ideb_snapshot.py</code>
+      recupera do painel versionado o último IDEB/SAEB auditado e combina esse snapshot com o
+      novo histórico direto do INEP. Mudanças só chegam ao site por PR, CI e merge.</p>
   </section>
 
   <section class="arch-section">
-    <p class="act-num">Contrato analítico</p>
-    <h2>Quatro regras sustentam o que aparece no painel.</h2>
+    <p class="act-num">Metodologia</p>
+    <h2>O painel compara territórios e etapas — não acompanha alunos.</h2>
     <div class="rule-grid">
-      <article><span>Índice</span><h3>IDEB</h3><p>Combina rendimento com proficiência padronizada a partir do SAEB. Notas por disciplina e aprovação aparecem separadas para revelar os componentes.</p></article>
-      <article><span>Validade</span><h3>Aprovação</h3><p>O pipeline valida o intervalo físico de 0% a 100% e referências oficiais de 2025.</p></article>
-      <article><span>Recorte</span><h3>Distorção idade-série</h3><p>As três etapas oficiais ficam disponíveis para Brasil, RS e Santa Maria.</p></article>
-      <article><span>Solidez</span><h3>Séries comparáveis</h3><p>Uma etapa entra quando dois níveis têm cinco ou mais anos válidos. Só os níveis que cumprem o mínimo são desenhados.</p></article>
+      <article><span>Território</span><h3>Três níveis</h3><p>Santa Maria (código 4316907), Rio Grande do Sul e Brasil. IDEB/SAEB usam rede pública para manter o recorte comparável.</p></article>
+      <article><span>Tempo</span><h3>Séries oficiais</h3><p>IDEB/SAEB: 2005–2023, em anos de edição. Aprovação: 2007–2025. TDI: 2006–2025.</p></article>
+      <article><span>Etapa</span><h3>Três recortes</h3><p>Anos iniciais, anos finais e Ensino Médio são fotografias distintas. A diferença entre etapas não representa a trajetória da mesma coorte.</p></article>
+      <article><span>Exibição</span><h3>Mínimo comparável</h3><p>Uma etapa entra no gráfico se ao menos dois níveis têm cinco anos válidos; apenas séries que cumprem esse mínimo são desenhadas.</p></article>
     </div>
   </section>
 
   <section class="arch-section quality">
-    <p class="act-num">Qualidade e proveniência</p>
-    <h2>A origem e cada transformação são verificáveis.</h2>
+    <p class="act-num">Qualidade, proveniência e limites</p>
+    <h2>Validação reduz erros; não transforma comparação em causalidade.</h2>
     <div class="quality-grid">
-      <div><h3>O que foi encontrado</h3><p>Há valores incompatíveis na harmonização da Base dos Dados. A publicação oficial do INEP é pública e constitui a referência de origem.</p></div>
-      <div><h3>Como o projeto responde</h3><p>Consome as planilhas oficiais sem interpolar nem corrigir números manualmente e registra hashes dos arquivos.</p></div>
-      <div><h3>Próxima evolução</h3><p>Migrar também IDEB e SAEB para uma fonte oficial direta e eliminar a dependência restante do BigQuery.</p></div>
+      <div><h3>Testes automáticos</h3><p>O dbt verifica grão único, campos obrigatórios, categorias aceitas e faixas físicas. O parser confronta referências oficiais de 2025.</p></div>
+      <div><h3>Rastro da fonte</h3><p>Os ZIPs diretos do INEP têm URL e hash registrados. Código, SQL, testes e páginas ficam versionados no Git.</p></div>
+      <div><h3>Limite de leitura</h3><p>Os indicadores descrevem resultados agregados. O painel não identifica causas, desempenho individual nem efeito de uma política específica.</p></div>
     </div>
   </section>
 
-  <footer class="foot"><div class="foot-meta"><span>Python · BigQuery · Parquet · dbt · DuckDB · Caddy</span><span>Modelos e decisões versionados no repositório</span><span class="foot-author">Projeto desenvolvido por <a href="https://github.com/leonardo-michelotti" target="_blank" rel="noopener noreferrer">Leonardo Michelotti</a>. Código e metodologia disponíveis no <a href="https://github.com/leonardo-michelotti/observatorio-educacao-rs" target="_blank" rel="noopener noreferrer">GitHub</a>.</span><a href="index.html">Voltar à análise dos indicadores</a></div></footer>
+  <footer class="foot"><div class="foot-meta"><span>Python · BigQuery · Parquet · dbt · DuckDB · Caddy</span><span>Fontes, regras e limites versionados no repositório</span><span class="foot-author">Projeto desenvolvido por <a href="https://github.com/leonardo-michelotti" target="_blank" rel="noopener noreferrer">Leonardo Michelotti</a>. Código e metodologia disponíveis no <a href="https://github.com/leonardo-michelotti/observatorio-educacao-rs" target="_blank" rel="noopener noreferrer">GitHub</a>.</span><a href="index.html">Voltar à análise dos indicadores</a></div></footer>
 </main>
 <script>
 const root=document.documentElement,button=document.getElementById("theme");
@@ -788,8 +789,8 @@ def main():
     desc = ("Vinte anos de dados do INEP mostram como a distância entre Santa Maria e as "
             "referências aumenta ao longo das etapas. IDEB, SAEB, aprovação e TDI.")
     arch_title = "Arquitetura e metodologia — Observatório da Educação"
-    arch_desc = ("Arquitetura do pipeline: INEP, Base dos Dados, BigQuery, Parquet, dbt, "
-                 "DuckDB, testes, proveniência e visualização.")
+    arch_desc = ("Fontes, arquitetura e metodologia do pipeline: ingestão INEP e BigQuery, "
+                 "Parquet, dbt, DuckDB, testes, proveniência e limites de interpretação.")
 
     # 1) versão Artifact (só conteúdo; o harness embrulha em <html>/<head>/<body>)
     OUT.write_text(f"<title>{title}</title>\n{style}\n{artifact_body}", encoding="utf-8")

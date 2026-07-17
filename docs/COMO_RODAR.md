@@ -39,8 +39,8 @@ source .venv/bin/activate
 python run_pipeline.py
 ```
 
-Isso executa: ingestão (BigQuery → `data/bronze/*.parquet`) → dbt (`dbt build`, silver/gold no
-`data/educacao.duckdb`) → gráficos (`assets/*.png`). Tudo idempotente.
+Isso executa: ingestão (BigQuery e planilhas do INEP → `data/bronze/*.parquet`) → dbt
+(`dbt build`, staging/mart no `data/educacao.duckdb`) → gráficos e páginas. Tudo idempotente.
 
 A ingestão primeiro obtém IDEB/SAEB pelo BigQuery e depois obtém os demais indicadores nas
 planilhas oficiais do INEP.
@@ -48,7 +48,7 @@ planilhas oficiais do INEP.
 ### Rodar etapas isoladas
 
 ```bash
-python ingestion/extract_bd.py                        # bronze
+python ingestion/extract_bd.py                        # IDEB/SAEB via BigQuery
 python ingestion/extract_inep.py --years 2025        # aprovação/TDI oficiais, um ano
 python ingestion/extract_inep.py                      # aprovação/TDI, histórico completo
 dbt build --project-dir dbt --profiles-dir dbt        # silver/gold + testes
