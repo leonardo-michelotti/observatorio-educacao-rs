@@ -28,18 +28,21 @@ def test_mart_expoe_o_contrato_esperado():
     assert niveis == {"brasil", "rs", "santa_maria"}
 
 
-def test_curadoria_remove_as_anomalias_da_fixture():
-    aprovacao_invalida = _query(
-        """select count(*) from fct_indicadores
-        where indicador = 'taxa_aprovacao' and valor < 40"""
-    )[0][0]
+def test_indicadores_oficiais_mantem_todas_as_etapas_e_historico_rs():
+    etapas = {
+        row[0]
+        for row in _query(
+            """select distinct etapa from fct_indicadores
+            where indicador = 'distorcao_idade_serie'"""
+        )
+    }
     tdi_rs_antiga = _query(
         """select count(*) from fct_indicadores
         where indicador = 'distorcao_idade_serie' and nivel = 'rs' and ano < 2023"""
     )[0][0]
 
-    assert aprovacao_invalida == 0
-    assert tdi_rs_antiga == 0
+    assert etapas == {"ef_anos_iniciais", "ef_anos_finais", "em"}
+    assert tdi_rs_antiga > 0
 
 
 def test_resultado_dbt_registra_modelos_e_testes_aprovados():

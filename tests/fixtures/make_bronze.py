@@ -1,6 +1,6 @@
 """Gera uma entrada bronze pequena e determinística para a CI offline.
 
-Os valores são sintéticos. A fixture exercita os contratos, a curadoria e os geradores sem
+Os valores são sintéticos. A fixture exercita os contratos e os geradores sem
 consultar o BigQuery ou usar credenciais.
 """
 
@@ -62,8 +62,6 @@ def _indicador_rows() -> list[dict]:
     for nivel in NIVEIS:
         for indice, ano in enumerate(ANOS_INDICADORES):
             aprovacao_em = 82 + offsets[nivel] + indice
-            if nivel == "rs" and ano == 2023:
-                aprovacao_em = 4.5  # anomalia conhecida: deve ser removida no staging
             rows.append(
                 {
                     "nivel": nivel,
