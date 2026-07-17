@@ -5,6 +5,7 @@
 > transformação e testes com dbt e entrega uma narrativa visual publicada na web.
 
 ![stack](https://img.shields.io/badge/stack-BigQuery%20%C2%B7%20DuckDB%20%C2%B7%20dbt%20%C2%B7%20matplotlib-blue)
+[![CI](https://github.com/leonardo-michelotti/observatorio-educacao-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/leonardo-michelotti/observatorio-educacao-rs/actions/workflows/ci.yml)
 
 **[Abrir a análise](https://observatorio-educacao-rs-production.up.railway.app/)** ·
 **[Ver arquitetura e metodologia](https://observatorio-educacao-rs-production.up.railway.app/arquitetura.html)**
@@ -23,7 +24,8 @@ fácil de ampliar com novos indicadores e recortes.
 - **Produto:** gráficos versionados, painel editorial responsivo e explorador com tabela
   alternativa.
 - **Operação:** execução centralizada em um runner e deploy estático endurecido no Railway,
-  sem credenciais ou dados brutos na imagem.
+  sem credenciais ou dados brutos na imagem. A CI reconstrói e testa o pipeline com fixtures
+  sintéticas, sem acessar o BigQuery.
 - **Evolução:** o fato tidy permite acrescentar indicadores semelhantes sem redesenhar todo o
   fluxo. Novas granularidades, como escola e rede administrativa, têm um caminho claro para
   dimensões próprias.
@@ -154,7 +156,7 @@ e deploy fazem parte do mesmo fluxo.
 Para crescer dentro do recorte atual, um novo indicador passa por ingestão, staging, mart,
 testes e registro na visualização. Se o projeto avançar para escolas, múltiplas redes, mais
 fontes ou atualizações frequentes, a evolução natural inclui dimensões explícitas, ingestão
-atômica, testes de contrato mais amplos, proveniência de cada extração e CI.
+atômica, testes de contrato mais amplos e proveniência de cada extração.
 
 ## Recorte e metodologia
 
@@ -164,8 +166,8 @@ atômica, testes de contrato mais amplos, proveniência de cada extração e CI.
   IDEB), **taxa de aprovação** (o rendimento) e **distorção idade-série** (EF anos finais).
 - **IDEB / SAEB:** rede **pública**, a única comparável nos três níveis no Ensino Fundamental.
 - **Modelo tidy** (`fct_indicadores`): uma linha por `(indicador, nível, etapa, ano, valor)`,
-  com **8 testes dbt de schema** (`not_null`, `accepted_values`) sobre chaves e valores de
-  domínio.
+  com **10 testes dbt**: oito testes de schema (`not_null`, `accepted_values`) e dois testes
+  singulares para unicidade do grão e faixas físicas dos indicadores.
 - **Regra dos gráficos:** cada etapa é renderizada se tiver **pelo menos 2 séries sólidas**
   (≥5 anos), plotando só as que passam. Por isso o IDEB de EM fica de fora (série curta) mas a
   distorção aparece como Santa Maria vs Brasil.
@@ -232,6 +234,13 @@ python run_pipeline.py
 
 Ao final: dados em `data/educacao.duckdb`, gráficos em `assets/` e páginas em `public/`.
 
+### Integração contínua sem credenciais
+
+O workflow [`ci.yml`](.github/workflows/ci.yml) roda em cada push e pull request. Ele cria um
+bronze sintético determinístico, executa `dbt build`, gera os gráficos e as páginas, roda testes
+de integração com pytest e preserva os artefatos por sete dias. A consulta real ao BigQuery não
+faz parte da CI e continua protegida por credenciais locais.
+
 ## Estrutura
 
 ```
@@ -241,6 +250,8 @@ dbt/models/marts/         fct_indicadores (fato tidy + testes)
 viz/make_charts.py        DuckDB → PNGs em assets/ (vitrine do README)
 viz/build_dashboard.py    DuckDB → páginas autocontidas de análise e arquitetura
 run_pipeline.py           orquestra as quatro etapas
+tests/                    fixtures e testes de integração offline
+.github/workflows/ci.yml  lint, dbt build, geração e testes em push/PR
 docs/PESQUISA_FONTES.md   fontes públicas, proveniência e limites de uso
 ```
 

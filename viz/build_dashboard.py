@@ -748,10 +748,10 @@ def main():
     PUB.write_text(_standalone(title, desc, style, body), encoding="utf-8")
     ARCH_PUB.write_text(_standalone(arch_title, arch_desc, style, arch_body), encoding="utf-8")
 
-    print(f"✔ {OUT.relative_to(ROOT)} ({OUT.stat().st_size/1024:.1f} KB)")
-    print(f"✔ {PUB.relative_to(ROOT)} ({PUB.stat().st_size/1024:.1f} KB)")
-    print(f"✔ {ARCH_OUT.relative_to(ROOT)} ({ARCH_OUT.stat().st_size/1024:.1f} KB)")
-    print(f"✔ {ARCH_PUB.relative_to(ROOT)} ({ARCH_PUB.stat().st_size/1024:.1f} KB)")
+    print(f"OK {OUT.relative_to(ROOT)} ({OUT.stat().st_size/1024:.1f} KB)")
+    print(f"OK {PUB.relative_to(ROOT)} ({PUB.stat().st_size/1024:.1f} KB)")
+    print(f"OK {ARCH_OUT.relative_to(ROOT)} ({ARCH_OUT.stat().st_size/1024:.1f} KB)")
+    print(f"OK {ARCH_PUB.relative_to(ROOT)} ({ARCH_PUB.stat().st_size/1024:.1f} KB)")
 
 
 if __name__ == "__main__":

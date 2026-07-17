@@ -84,7 +84,7 @@ def main() -> None:
     )
     ind.to_parquet(BRONZE / "indicadores.parquet", index=False)
 
-    print(f"\n✅ Bronze gravado em {BRONZE} "
+    print(f"\nBronze gravado em {BRONZE} "
           f"(ideb={len(ideb)} linhas, indicadores={len(ind)} linhas).")
 
 

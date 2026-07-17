@@ -11,18 +11,21 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: [brasil, rs, santa_maria]
+              arguments:
+                values: [brasil, rs, santa_maria]
       - name: ano
         tests: [not_null]
       - name: indicador
         tests:
           - not_null
           - accepted_values:
-              values: [ideb, taxa_aprovacao, saeb_matematica, saeb_lingua_portuguesa, distorcao_idade_serie]
+              arguments:
+                values: [ideb, taxa_aprovacao, saeb_matematica, saeb_lingua_portuguesa, distorcao_idade_serie]
       - name: etapa
         tests:
           - not_null
           - accepted_values:
-              values: [ef_anos_iniciais, ef_anos_finais, em]
+              arguments:
+                values: [ef_anos_iniciais, ef_anos_finais, em]
       - name: valor
         tests: [not_null]

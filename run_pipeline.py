@@ -46,7 +46,7 @@ def main():
     step_dbt()
     step_charts()
     step_dashboard()
-    print("\n✅ Pipeline completo. Gráficos em assets/, painel em viz/dashboard.html, "
+    print("\nPipeline completo. Gráficos em assets/, painel em viz/dashboard.html, "
           "dados em data/educacao.duckdb.")
 
 

@@ -129,7 +129,7 @@ def make_figure(con, indicador):
     out = ASSETS / f"{indicador}.png"
     fig.savefig(out, dpi=150, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
-    print(f"  ✔ {out.relative_to(ROOT)}")
+    print(f"  OK {out.relative_to(ROOT)}")
     return out
 
 
@@ -142,7 +142,7 @@ def main():
             make_figure(con, indicador)
     finally:
         con.close()
-    print(f"\n✅ Gráficos em {ASSETS}.")
+    print(f"\nGráficos em {ASSETS}.")
 
 
 if __name__ == "__main__":
