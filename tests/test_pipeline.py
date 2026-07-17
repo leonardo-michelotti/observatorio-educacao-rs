@@ -70,4 +70,8 @@ def test_artefatos_publicaveis_foram_gerados():
     assert "planilhas oficiais do INEP" in painel
     assert "A distância aumenta" in painel
     assert "fluxo colapsa" not in painel
+    arquitetura = arquivos[1].read_text(encoding="utf-8")
+    assert "Duas rotas de entrada" in arquitetura
+    assert "não acompanha alunos" in arquitetura
+    assert "Limite de leitura" in arquitetura
     assert arquivos[2].read_bytes().startswith(b"\x89PNG\r\n\x1a\n")

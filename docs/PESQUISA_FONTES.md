@@ -1,47 +1,76 @@
-# Fontes e proveniência dos dados
+# Fontes, metodologia e proveniência
 
-Este projeto analisa a educação básica em Santa Maria, no Rio Grande do Sul e no Brasil.
-Os indicadores são publicados pelo Instituto Nacional de Estudos e Pesquisas Educacionais
-Anísio Teixeira (Inep) e consultados por meio das tabelas harmonizadas da Base dos Dados no
-BigQuery.
+O projeto compara indicadores agregados da educação básica em Santa Maria, no Rio Grande do
+Sul e no Brasil. A referência institucional é o Instituto Nacional de Estudos e Pesquisas
+Educacionais Anísio Teixeira (Inep), mas o caminho de acesso varia por indicador.
 
 ## Fontes utilizadas
 
-| Fonte | Uso no projeto |
-|---|---|
-| [Inep](https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos) | Fonte oficial do IDEB, SAEB, taxas de rendimento e distorção idade-série |
-| [Base dos Dados](https://basedosdados.org/) | Camada de acesso e harmonização usada pela ingestão |
-| [IBGE](https://www.ibge.gov.br/explica/codigos-dos-municipios.php) | Identificação territorial de Santa Maria e do Rio Grande do Sul |
+| Indicadores | Fonte de origem | Acesso usado pelo projeto | Período |
+|---|---|---|---|
+| Aprovação | Inep | Planilhas anuais oficiais (ZIP com XLS/XLSX) | 2007–2025 |
+| Distorção idade-série (TDI) | Inep | Planilhas anuais oficiais (ZIP com XLS/XLSX) | 2006–2025 |
+| IDEB e notas SAEB | Inep | `basedosdados.br_inep_ideb` no BigQuery | 2005–2023 |
 
-As tabelas consultadas são:
+O recorte municipal usa o código IBGE `4316907` para Santa Maria; o estadual usa `RS`. Para
+IDEB e SAEB, a análise seleciona a rede pública, recorte comum aos três níveis geográficos.
 
-- `basedosdados.br_inep_ideb`;
-- `basedosdados.br_inep_indicadores_educacionais`.
-
-O recorte municipal usa o código IBGE `4316907` para Santa Maria. O recorte estadual usa a
-sigla `RS`.
-
-## Fluxo de proveniência
+## Duas rotas de ingestão
 
 ```text
-Inep → Base dos Dados / BigQuery → Parquet bronze → dbt / DuckDB → gráficos e páginas
+Planilhas INEP ── parser XLS/XLSX ──┐
+                                     ├─ Parquet bronze ─ dbt/DuckDB ─ gráficos e páginas
+Base dos Dados / BigQuery ──────────┘
 ```
 
-A ingestão preserva os valores consultados em arquivos Parquet locais, que não são
-versionados. As transformações e regras de qualidade ficam nos modelos dbt do repositório. Os
-gráficos e as páginas publicadas são derivados do modelo analítico `fct_indicadores`.
+`ingestion/extract_inep.py` descobre os links nas páginas anuais do Inep, baixa os arquivos,
+seleciona semanticamente as colunas das três etapas e grava aprovação e TDI em
+`data/bronze/indicadores.parquet`. Para cada ZIP, registra URL, ano, escopo, tamanho e SHA-256
+em `data/bronze/inep_provenance.json`.
+
+`ingestion/extract_bd.py` consulta IDEB e seus componentes SAEB no BigQuery e grava
+`data/bronze/ideb.parquet`. Como essa rota ainda depende de uma camada harmonizada e de
+credenciais externas, o workflow de atualização oficial também pode reconstruir esse bronze a
+partir do snapshot auditado embutido no painel versionado, usando
+`ingestion/load_ideb_snapshot.py`. O snapshot evita uma nova consulta; ele não muda a fonte nem
+cria observações novas.
+
+## Transformação e contrato analítico
+
+Os modelos de staging normalizam tipos, níveis e etapas. O mart `fct_indicadores` usa o grão:
+
+```text
+(indicador, nível geográfico, etapa, ano) → valor
+```
+
+Os testes verificam campos obrigatórios, categorias aceitas, unicidade do grão e faixas físicas
+dos indicadores. O parser direto também confronta referências oficiais de 2025. Nenhuma etapa
+interpola, estima ou corrige manualmente valores publicados.
+
+## Regras de visualização
+
+- Uma etapa entra no gráfico quando pelo menos dois níveis geográficos possuem cinco ou mais
+  anos válidos.
+- Somente as séries que cumprem esse mínimo são desenhadas.
+- Anos iniciais, anos finais e Ensino Médio são recortes agregados distintos; sua comparação
+  não acompanha a mesma coorte de estudantes.
+- As diferenças apresentadas são descritivas. Não permitem atribuir causalidade, avaliar alunos
+  individualmente ou isolar o efeito de uma política pública.
 
 ## Limitações conhecidas
 
-A auditoria identificou valores historicamente inconsistentes em partes da tabela harmonizada
-`br_inep_indicadores_educacionais`. Por isso, o projeto aplica regras explícitas de curadoria e
-publica apenas séries que passaram pelas verificações documentadas no README e nos modelos dbt.
+A auditoria encontrou valores incompatíveis na tabela harmonizada de indicadores educacionais
+antes usada para rendimento e TDI. Por isso, esses dois grupos agora vêm diretamente das
+planilhas oficiais. IDEB e SAEB continuam temporariamente via Base dos Dados/BigQuery; migrá-los
+para arquivos oficiais diretos é a pendência de fonte ainda aberta.
 
-Essas regras não corrigem a fonte. Elas evitam apresentar como válidos pontos incompatíveis
-com as séries oficiais e tornam as exclusões auditáveis no código.
+O histórico publicado pode sofrer revisões pelo próprio Inep. Os hashes permitem identificar
+qual arquivo foi processado, mas não impedem que a origem publique uma nova versão. Dados
+brutos, credenciais e o banco DuckDB local são deliberadamente excluídos do Git.
 
-## Reprodutibilidade
+## Como reproduzir
 
-As consultas estão em `ingestion/extract_bd.py`, as transformações em `dbt/models/` e as
-instruções de execução em [`COMO_RODAR.md`](COMO_RODAR.md). Credenciais, dados brutos e o banco
-DuckDB local são deliberadamente excluídos do Git.
+As ingestões estão em `ingestion/`, as transformações em `dbt/models/`, os testes em
+`dbt/tests/` e `tests/`, e as instruções operacionais em [`COMO_RODAR.md`](COMO_RODAR.md). O
+workflow de atualização só propõe mudanças por pull request; CI e revisão precedem o merge e a
+publicação.
