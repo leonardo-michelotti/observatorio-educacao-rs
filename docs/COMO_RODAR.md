@@ -74,3 +74,10 @@ python -m pytest
 Os ZIPs ficam em cache sob `data/raw/inep/`. Cada execução gera
 `data/bronze/inep_provenance.json` com URL, SHA-256 e tamanho dos arquivos. Como o servidor do
 INEP pode oscilar, o extrator repete downloads interrompidos e reaproveita ZIPs já validados.
+
+## Atualizar o site sem BigQuery
+
+O workflow manual **Atualização oficial Inep** reconstrói o snapshot bronze de IDEB/SAEB a
+partir do painel real versionado, baixa o histórico completo de rendimento e TDI, executa dbt e
+regenera as páginas. Se houver diferença, ele abre um PR com `public/` e os HTMLs de inspeção.
+O site só muda depois que esse PR passa pela CI e é mergeado, preservando a proteção da `main`.

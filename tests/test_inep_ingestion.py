@@ -21,6 +21,27 @@ def test_rendimento_escolhe_bloco_de_aprovacao_quando_etapas_se_repetem():
     assert found["rs"]["taxa_aprovacao_ef_anos_finais"] == 93.9
 
 
+def test_rendimento_ignora_total_do_medio_nao_seriado():
+    rows = [
+        ["Ano", "UF", "Rede", "Localização", "Aprovação", None, None, None],
+        [
+            None,
+            None,
+            None,
+            None,
+            "Anos iniciais",
+            "Anos finais",
+            "Total aprovação médio",
+            "Total aprovação médio não-seriado",
+        ],
+        [2011, "Brasil", "Total", "Total", 92.0, 84.0, 77.0, 65.0],
+    ]
+
+    found = _parse_rows(rows, "rendimento", 2011, {"brasil"})
+
+    assert found["brasil"]["taxa_aprovacao_em"] == 77.0
+
+
 def test_tdi_identifica_santa_maria_pelo_codigo_ibge():
     rows = [
         ["Ano", "Município", "Nome", "Rede", "Localização", "Anos iniciais", "Anos finais", "Médio total"],
@@ -34,6 +55,17 @@ def test_tdi_identifica_santa_maria_pelo_codigo_ibge():
         "tdi_ef_anos_finais": 18.2,
         "tdi_em": 20.9,
     }
+
+
+def test_tdi_legada_usa_contexto_da_planilha_nacional():
+    rows = [
+        ["Ano", "Localização", "Dependência", "Anos iniciais", "Anos finais", "Médio total"],
+        [2007, "Total", "Total", 21.0, 34.0, 42.0],
+    ]
+
+    found = _parse_rows(rows, "tdi", 2007, {"brasil"}, default_level="brasil")
+
+    assert found["brasil"]["tdi_ef_anos_finais"] == 34.0
 
 
 def test_referencia_2025_detecta_regressao_semantica():

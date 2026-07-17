@@ -35,9 +35,9 @@ fácil de ampliar com novos indicadores e recortes.
    o índice em proficiência (SAEB) e rendimento (aprovação), vê-se que a proficiência caiu de
    2019 para 2021 enquanto a aprovação subiu.
 2. **Santa Maria vai bem no Fundamental, mas patina no resto.** A distorção idade-série da
-   cidade (19,8%) é maior que a do Brasil (15,7%) nos anos finais, comparando 2024.
-3. **O Ensino Médio é o gargalo.** A aprovação de EM de Santa Maria (78,2%) fica muito abaixo
-   do Brasil (86,6%) em 2022, e o IDEB de EM caiu de 3,1 (2019) para 2,4 (2023).
+   cidade (18,2%) é maior que a do Brasil (14,4%) nos anos finais, comparando 2025.
+3. **O Ensino Médio é o gargalo.** A aprovação de EM de Santa Maria (88,1%) fica abaixo
+   do RS (91,9%) e do Brasil (94,8%) em 2025; o IDEB de EM caiu de 3,1 (2019) para 2,4 (2023).
 
 ---
 
@@ -88,26 +88,22 @@ e Brasil: Matemática **266,8** e Português **269,5**.
 
 | Etapa | Santa Maria | RS | Brasil |
 |---|:-:|:-:|:-:|
-| EF · Anos iniciais (2024) | **97,5%** | 96,0% | 97,4% |
-| EF · Anos finais (2024) | **97,4%** | 91,4% | 94,1% |
-| Ensino médio (2022) | **78,2%** | —¹ | 86,6% |
+| EF · Anos iniciais (2025) | **96,5%** | 96,9% | 98,3% |
+| EF · Anos finais (2025) | **91,3%** | 93,9% | 96,2% |
+| Ensino médio (2025) | **88,1%** | 91,9% | 94,8% |
 
-¹ O recorte do RS para 2022 foi excluído pela curadoria por apresentar valor inconsistente.
-
-Em 2024, Santa Maria supera RS e Brasil nas duas etapas do Fundamental. **No Ensino Médio o
-quadro inverte**: em 2022, a aprovação de Santa Maria (78,2%) fica abaixo do Brasil (86,6%),
-coerente com o IDEB de EM da cidade (2,4 em 2023). O EM é o ponto fraco e, por isso, a etapa
-onde ainda há mais a ganhar.
+Em 2025, Santa Maria fica abaixo de RS e Brasil nas três etapas. A diferença é maior no
+Ensino Médio: 88,1% na cidade, ante 91,9% no estado e 94,8% no país. O resultado é coerente
+com o IDEB de EM da cidade (2,4 em 2023) e aponta a etapa onde ainda há mais a ganhar.
 
 ### Distorção idade-série — EF anos finais
 
-![Distorção idade-série — Santa Maria vs Brasil](assets/distorcao_idade_serie.png)
+![Distorção idade-série — Santa Maria vs RS vs Brasil](assets/distorcao_idade_serie.png)
 
-Recolocada na vitrine **após auditoria** (ver notas de qualidade), restrita ao único recorte
-mantido após a verificação: EF anos finais, Santa Maria vs Brasil. O resultado exige atenção:
-a distorção idade-série de Santa Maria (**19,8% em 2024**) é *mais alta* que a do Brasil
-(**15,7% em 2024**) e caiu mais tarde. Reforça a leitura dos outros gráficos: a base (anos iniciais)
-vai bem, mas o percurso escolar acumula atraso conforme avança.
+Com a fonte oficial direta, as três etapas e os três níveis voltam à vitrine. Em 2025, nos
+anos finais, Santa Maria registra **18,2%**, acima do RS (**17,2%**) e do Brasil (**14,4%**).
+O Ensino Médio também permanece acima das referências: **20,9%** na cidade, 18,0% no estado e
+16,0% no país. A base larga melhor; o atraso se acumula conforme o percurso avança.
 
 ---
 
@@ -243,13 +239,15 @@ faz parte da CI e continua protegida por credenciais locais.
 
 O workflow manual [`refresh-inep.yml`](.github/workflows/refresh-inep.yml) exercita os downloads
 reais, valida as referências oficiais, reconstrói o produto e publica Parquet, proveniência,
-logs e páginas como artefatos por 14 dias.
+logs e páginas como artefatos por 14 dias. Quando as páginas mudam, o bot envia uma branch e
+abre um PR; o merge desse PR aciona o deploy normal do Railway.
 
 ## Estrutura
 
 ```
 ingestion/extract_bd.py   Base dos Dados (BigQuery) → Parquet bronze (IDEB + SAEB)
 ingestion/extract_inep.py planilhas oficiais INEP → Parquet (aprovação + TDI + proveniência)
+ingestion/load_ideb_snapshot.py  painel versionado → snapshot bronze de IDEB/SAEB
 dbt/models/staging/       stg_ideb, stg_indicadores (limpeza + unpivot + curadoria)
 dbt/models/marts/         fct_indicadores (fato tidy + testes)
 viz/make_charts.py        DuckDB → PNGs em assets/ (vitrine do README)
