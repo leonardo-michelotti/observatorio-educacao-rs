@@ -80,7 +80,7 @@ INEP pode oscilar, o extrator repete downloads interrompidos e reaproveita ZIPs 
 
 ## Atualizar o site sem BigQuery
 
-O workflow manual **Atualização oficial Inep** reconstrói o snapshot bronze de IDEB/SAEB a
-partir do painel real versionado, baixa o histórico completo de rendimento e TDI, executa dbt e
-regenera as páginas. Se houver diferença, ele abre um PR com `public/` e os HTMLs de inspeção.
-O site só muda depois que esse PR passa pela CI e é mergeado, preservando a proteção da `main`.
+O workflow manual **Atualização oficial Inep** reconstrói os bronzes históricos a partir do
+painel real versionado, baixa somente o último ano de rendimento/TDI e faz upsert dessas linhas.
+Depois executa dbt e regenera as páginas. Se houver diferença, abre um PR com `public/` e os
+HTMLs de inspeção. O site só muda depois da CI e do merge, preservando a proteção da `main`.

@@ -159,10 +159,10 @@ Esta é uma arquitetura local e deliberadamente simples, adequada ao volume e à
 projeto. Parquet preserva as entradas, DuckDB executa a transformação analítica sem servidor e
 o Git registra código, SQL, testes, documentação e produtos publicados.
 
-A atualização oficial pode rodar sem uma nova consulta ao BigQuery: o workflow reutiliza o
-snapshot auditado de IDEB/SAEB embutido no painel versionado e atualiza aprovação/TDI diretamente
-do INEP. Isso mantém o processo reproduzível, mas não elimina a dependência de origem: migrar
-IDEB/SAEB para arquivos oficiais diretos continua sendo a evolução prevista.
+A atualização oficial pode rodar sem uma nova consulta ao BigQuery: o workflow restaura do
+painel o histórico auditado dos quatro grupos e substitui somente o último ano de aprovação/TDI
+pelas planilhas diretas do INEP. Isso reduz dezenas de downloads legados sem alterar a série.
+Migrar IDEB/SAEB para arquivos oficiais diretos continua sendo a evolução prevista.
 
 ## Metodologia
 
@@ -252,22 +252,21 @@ bronze sintético determinístico, executa `dbt build`, gera os gráficos e as p
 e testa navegação e acessibilidade WCAG com Playwright + axe em desktop e celular. Os artefatos
 ficam preservados por sete dias. A consulta real ao BigQuery não faz parte da CI.
 
-O workflow manual [`refresh-inep.yml`](.github/workflows/refresh-inep.yml) exercita os downloads
-reais, valida as referências oficiais, reconstrói o produto e publica Parquet, proveniência,
-logs e páginas como artefatos por 14 dias. Quando as páginas mudam, o bot envia uma branch e
-abre um PR; o merge desse PR aciona o deploy normal do Railway.
+O workflow manual [`refresh-inep.yml`](.github/workflows/refresh-inep.yml) restaura o histórico
+auditado, baixa o último ano real, valida as referências oficiais, reconstrói o produto e publica
+Parquet, proveniência, logs e páginas como artefatos por 14 dias. Quando as páginas mudam, o bot
+envia uma branch e abre um PR.
 
 Esse fluxo não usa a fixture sintética no produto publicado. Para atualizar o site sem consultar
-o BigQuery, ele reconstrói `ideb.parquet` a partir do snapshot real de IDEB/SAEB embutido na
-última página versionada e substitui somente rendimento e TDI pelo histórico oficial recém
-baixado. A fixture continua restrita à CI offline.
+o BigQuery, ele reconstrói os dois bronzes a partir do snapshot real da última página versionada
+e faz upsert do ano mais recente de aprovação/TDI. A fixture continua restrita à CI offline.
 
 ## Estrutura
 
 ```
 ingestion/extract_bd.py   Base dos Dados (BigQuery) → Parquet bronze (IDEB + SAEB)
 ingestion/extract_inep.py planilhas oficiais INEP → Parquet (aprovação + TDI + proveniência)
-ingestion/load_ideb_snapshot.py  painel versionado → snapshot bronze de IDEB/SAEB
+ingestion/load_ideb_snapshot.py  painel versionado → bronzes históricos auditados
 dbt/models/staging/       stg_ideb, stg_indicadores (normalização + unpivot + contratos)
 dbt/models/marts/         fct_indicadores (fato tidy + testes)
 viz/make_charts.py        DuckDB → PNGs em assets/ (vitrine do README)

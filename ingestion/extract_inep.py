@@ -394,18 +394,47 @@ def validate_reference(frame: pd.DataFrame) -> None:
                     )
 
 
+def merge_existing(frame: pd.DataFrame, path: Path) -> pd.DataFrame:
+    if not path.exists():
+        return frame
+    existing = pd.read_parquet(path)
+    refreshed_years = set(frame["ano"])
+    historical = existing[~existing["ano"].isin(refreshed_years)]
+    return (
+        pd.concat([historical, frame], ignore_index=True, sort=False)
+        .sort_values(["ano", "nivel"])
+        .reset_index(drop=True)
+    )
+
+
+def latest_year() -> int:
+    sources = json.loads(SOURCES_PATH.read_text(encoding="utf-8"))
+    years = {config["years"][1] for config in sources.values()}
+    if len(years) != 1:
+        raise ValueError(f"Fontes com anos máximos diferentes: {sorted(years)}")
+    return years.pop()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--years", help="ano único ou intervalo inclusivo, por exemplo 2023:2025")
+    years = parser.add_mutually_exclusive_group()
+    years.add_argument("--years", help="ano único ou intervalo inclusivo, por exemplo 2023:2025")
+    years.add_argument("--latest", action="store_true", help="baixa somente o último ano configurado")
+    parser.add_argument("--merge", action="store_true", help="substitui os anos baixados no bronze existente")
     args = parser.parse_args()
 
-    frame, provenance = extract(args.years)
+    specification = str(latest_year()) if args.latest else args.years
+    frame, provenance = extract(specification)
     validate_reference(frame)
     BRONZE.mkdir(parents=True, exist_ok=True)
-    frame.to_parquet(BRONZE / "indicadores.parquet", index=False)
+    output = BRONZE / "indicadores.parquet"
+    if args.merge:
+        frame = merge_existing(frame, output)
+    frame.to_parquet(output, index=False)
     metadata = {
         "generated_at": datetime.now(UTC).isoformat(),
         "municipality": MUNICIPIO_SANTA_MARIA,
+        "mode": "merge" if args.merge else "replace",
         "files": provenance,
     }
     (BRONZE / "inep_provenance.json").write_text(
