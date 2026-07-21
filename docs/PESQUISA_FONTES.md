@@ -28,12 +28,17 @@ seleciona semanticamente as colunas das três etapas e grava aprovação e TDI e
 `data/bronze/indicadores.parquet`. Para cada ZIP, registra URL, ano, escopo, tamanho e SHA-256
 em `data/bronze/inep_provenance.json`.
 
+Alguns arquivos históricos são servidos sem a cadeia intermediária completa. O extrator mantém
+a verificação TLS ativa e acrescenta ao pacote Mozilla o certificado intermediário publicado
+pela autoridade indicada no próprio certificado do Inep. Não há uso de `verify=False`.
+
 `ingestion/extract_bd.py` consulta IDEB e seus componentes SAEB no BigQuery e grava
 `data/bronze/ideb.parquet`. Como essa rota ainda depende de uma camada harmonizada e de
 credenciais externas, o workflow de atualização oficial também pode reconstruir esse bronze a
 partir do snapshot auditado embutido no painel versionado, usando
-`ingestion/load_ideb_snapshot.py`. O snapshot evita uma nova consulta; ele não muda a fonte nem
-cria observações novas.
+`ingestion/load_ideb_snapshot.py`. O mesmo carregador restaura o histórico publicado de
+aprovação/TDI antes do upsert do último ano direto. O snapshot evita consultas e downloads
+legados; ele não muda a fonte nem cria observações novas.
 
 ## Transformação e contrato analítico
 

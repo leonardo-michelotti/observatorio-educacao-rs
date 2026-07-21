@@ -3,7 +3,23 @@
 import pandas as pd
 import pytest
 
-from ingestion.extract_inep import _parse_rows, _requested_years, validate_reference
+from ingestion.extract_inep import (
+    _parse_rows,
+    _requested_years,
+    _session,
+    latest_year,
+    merge_existing,
+    validate_reference,
+)
+
+
+def test_sessao_inep_preserva_validacao_tls_com_intermediario():
+    session = _session()
+
+    assert session.verify is not False
+    bundle = open(session.verify, encoding="utf-8").read()
+    assert "BEGIN CERTIFICATE" in bundle
+    assert bundle.count("BEGIN CERTIFICATE") > 100
 
 
 def test_rendimento_escolhe_bloco_de_aprovacao_quando_etapas_se_repetem():
@@ -104,3 +120,20 @@ def test_intervalo_de_anos_rejeita_limites_invalidos():
     assert list(_requested_years("2023:2025", 2007, 2025)) == [2023, 2024, 2025]
     with pytest.raises(ValueError, match="fora do intervalo"):
         _requested_years("2025:2023", 2007, 2025)
+
+
+def test_merge_substitui_ano_atual_e_preserva_historico(tmp_path):
+    path = tmp_path / "indicadores.parquet"
+    pd.DataFrame([
+        {"nivel": "brasil", "ano": 2024, "taxa_aprovacao_em": 93.0},
+        {"nivel": "brasil", "ano": 2025, "taxa_aprovacao_em": 1.0},
+    ]).to_parquet(path, index=False)
+    current = pd.DataFrame([
+        {"nivel": "brasil", "ano": 2025, "taxa_aprovacao_em": 94.8},
+    ])
+
+    merged = merge_existing(current, path)
+
+    assert list(merged["ano"]) == [2024, 2025]
+    assert merged.loc[merged["ano"] == 2025, "taxa_aprovacao_em"].item() == 94.8
+    assert latest_year() == 2025

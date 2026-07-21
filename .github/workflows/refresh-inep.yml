@@ -31,13 +31,13 @@ jobs:
       - name: Instalar dependências
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements-dev.txt
+          python -m pip install -r requirements.lock
 
-      - name: Restaurar o snapshot real de IDEB e SAEB
+      - name: Restaurar o snapshot público auditado
         run: python ingestion/load_ideb_snapshot.py
 
-      - name: Baixar e validar rendimento e TDI oficiais
-        run: python ingestion/extract_inep.py
+      - name: Atualizar e validar o último ano oficial
+        run: python ingestion/extract_inep.py --latest --merge
 
       - name: Construir e testar o produto de dados
         run: |
@@ -78,5 +78,5 @@ jobs:
           git push --set-upstream origin "$branch"
           url=$(gh pr create --base main --head "$branch" \
             --title "Atualiza indicadores oficiais do Inep" \
-            --body "Atualiza os gráficos e as páginas com o histórico completo de rendimento e TDI publicado pelo Inep. A proveniência e os resultados do pipeline estão anexados à execução da Action.")
+            --body "Atualiza o último ano de rendimento e TDI a partir do Inep e preserva o histórico auditado do snapshot público. A proveniência e os resultados do pipeline estão anexados à execução da Action.")
           echo "PR criado: $url" >> "$GITHUB_STEP_SUMMARY"

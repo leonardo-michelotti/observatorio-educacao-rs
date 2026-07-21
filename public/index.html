@@ -13,18 +13,18 @@
 <style>
 
 :root{
-  --paper:#f5f4ef; --ink:#1c1b16; --ink-2:#565349; --muted:#928e82; --rule:#d8d5cb; --rule-2:#e6e3da;
+  --paper:#f5f4ef; --ink:#1c1b16; --ink-2:#565349; --muted:#68655c; --rule:#d8d5cb; --rule-2:#e6e3da;
   --sm:#c1402a; --br:#3f3c34; --rs:#a29d90;
   --font-serif:"Iowan Old Style","Charter","Sorts Mill Goudy","Georgia","Times New Roman",serif;
   --font-sans:ui-sans-serif,"Avenir Next","Segoe UI",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){
-  :root{ --paper:#16150f; --ink:#efe9d9; --ink-2:#b2ac9a; --muted:#787366; --rule:#2e2b22; --rule-2:#221f18;
+  :root{ --paper:#16150f; --ink:#efe9d9; --ink-2:#b2ac9a; --muted:#aaa493; --rule:#2e2b22; --rule-2:#221f18;
     --sm:#e0603f; --br:#c9c3b2; --rs:#7c7768; }
 }
-:root[data-theme="light"]{ --paper:#f5f4ef; --ink:#1c1b16; --ink-2:#565349; --muted:#928e82; --rule:#d8d5cb; --rule-2:#e6e3da;
+:root[data-theme="light"]{ --paper:#f5f4ef; --ink:#1c1b16; --ink-2:#565349; --muted:#68655c; --rule:#d8d5cb; --rule-2:#e6e3da;
   --sm:#c1402a; --br:#3f3c34; --rs:#a29d90; }
-:root[data-theme="dark"]{ --paper:#16150f; --ink:#efe9d9; --ink-2:#b2ac9a; --muted:#787366; --rule:#2e2b22; --rule-2:#221f18;
+:root[data-theme="dark"]{ --paper:#16150f; --ink:#efe9d9; --ink-2:#b2ac9a; --muted:#aaa493; --rule:#2e2b22; --rule-2:#221f18;
   --sm:#e0603f; --br:#c9c3b2; --rs:#7c7768; }
 
 *{box-sizing:border-box}
@@ -332,7 +332,8 @@ thead th{color:var(--ink-2);border-bottom:1px solid var(--rule);}
     <div class="foot-meta">
       <span>Fonte: planilhas oficiais do INEP · IDEB/SAEB via <code>br_inep_ideb</code></span>
       <span>Santa Maria/RS · IBGE <code>4316907</code></span>
-      <span>IDEB e SAEB: rede pública · demais indicadores: rede total · 2005–2025</span>
+      <span class="data-freshness">Dados disponíveis: IDEB/SAEB até 2023 · aprovação/TDI até 2025</span>
+      <span>IDEB e SAEB: rede pública · demais indicadores: rede total</span>
       <span class="foot-author">Projeto desenvolvido por <a href="https://github.com/leonardo-michelotti" target="_blank" rel="noopener noreferrer">Leonardo Michelotti</a>. Código e metodologia disponíveis no <a href="https://github.com/leonardo-michelotti/observatorio-educacao-rs" target="_blank" rel="noopener noreferrer">GitHub</a>.</span>
     </div>
   </footer>

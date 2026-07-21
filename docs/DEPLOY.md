@@ -1,76 +1,70 @@
 # Deploy — dashboard no Railway
 
-O que vai pro ar são **duas páginas estáticas** (`public/index.html` e
-`public/arquitetura.html`), servidas por um
-**Caddy** mínimo e endurecido. Sem backend, sem BigQuery, **sem segredos na imagem** — o
-pipeline de dados continua rodando localmente e só o HTML gerado é publicado.
+O ambiente de produção serve `public/` com uma imagem mínima do Caddy. Não há Python, banco,
+credenciais do INEP ou dados brutos no container.
 
-**No ar:** <https://observatorio-educacao-rs-production.up.railway.app>
+**Produção:** <https://observatorio-educacao-rs-production.up.railway.app>
 
-> Nota do primeiro deploy: o `railway up` (CLI) usa o Railpack, que detecta o site estático e
-> copia o contexto para `/app`. Por isso o `Caddyfile`/`Dockerfile` servem `/app/public`. Se
-> você conectar via GitHub, o `railway.toml` faz usar o `Dockerfile` (que também serve
-> `/app/public`) — os dois caminhos são equivalentes.
+## Fluxo automático
 
-## Arquivos que compõem o deploy
+```text
+PR → merge na main → CI verde → Deploy Railway → verificação HTTP
+```
+
+O workflow [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) é acionado somente
+depois que a CI da `main` termina com sucesso. Ele publica exatamente o commit validado e testa
+o endereço público. O job fica intencionalmente desabilitado até que a credencial seja criada.
+
+### Ativar uma única vez
+
+1. No projeto do Railway, abra **Settings → Tokens** e crie um **Project Token** do ambiente
+   `production`. Project Tokens são limitados ao projeto e são a credencial recomendada pelo
+   Railway para CI/CD.
+2. Salve o valor sem colocá-lo em arquivo:
+   ```bash
+   gh secret set RAILWAY_TOKEN --repo leonardo-michelotti/observatorio-educacao-rs
+   ```
+   O comando solicita o token de forma interativa e o envia criptografado ao GitHub.
+3. Habilite o workflow:
+   ```bash
+   gh variable set RAILWAY_DEPLOY_ENABLED --body true \
+     --repo leonardo-michelotti/observatorio-educacao-rs
+   ```
+4. Execute **Deploy Railway → Run workflow** uma vez. Depois disso, todo merge aprovado pela
+   CI será publicado automaticamente.
+
+O token não deve ser um token pessoal ou de workspace. A documentação oficial está em
+<https://docs.railway.com/cli/deploying#using-project-tokens>.
+
+## Arquivos publicados
 
 | Arquivo | Papel |
 |---|---|
-| `public/index.html` | narrativa e explorador (gerados e versionados) |
-| `public/arquitetura.html` | arquitetura, metodologia e decisões de curadoria |
-| `Dockerfile` | imagem `caddy:2-alpine` que copia `public/` e o `Caddyfile` |
-| `Caddyfile` | servidor estático + cabeçalhos de segurança + `$PORT` do Railway |
-| `.dockerignore` | bloqueia tudo menos `Caddyfile` e `public/` (nada de `.env`/dados/venv) |
-| `railway.toml` | build via Dockerfile + healthcheck na raiz |
+| `public/index.html` | narrativa e explorador |
+| `public/arquitetura.html` | arquitetura e metodologia |
+| `public/data-status.json` | anos disponíveis e fontes por indicador |
+| `Dockerfile` | imagem `caddy:2-alpine` |
+| `Caddyfile` | servidor, compressão, cache e cabeçalhos de segurança |
+| `railway.toml` | Dockerfile, healthcheck e política de reinício |
 
-## Subir (opção recomendada: GitHub → Railway)
+## Deploy manual de contingência
 
-1. Garanta que `public/index.html` está atualizado e commitado:
-   ```bash
-   python viz/build_dashboard.py   # ou python run_pipeline.py (regenera tudo)
-   git add public/index.html && git commit -m "chore: atualiza dashboard publicado"
-   git push
-   ```
-2. No [Railway](https://railway.app/): **New Project → Deploy from GitHub repo** →
-   selecione `observatorio-educacao-rs`.
-3. O Railway detecta o `Dockerfile`/`railway.toml`, builda e sobe sozinho.
-4. **Settings → Networking → Generate Domain** (ou adicione um domínio próprio). HTTPS é
-   automático.
-
-Toda vez que você der `git push` com um `public/index.html` novo, o Railway **re-deploya sozinho**.
-
-## Subir pela CLI (alternativa)
+Se o GitHub Actions ou o token estiver indisponível, um operador autenticado pode publicar a
+mesma árvore local:
 
 ```bash
-npm i -g @railway/cli      # ou: brew install railway
-railway login
-railway init               # cria/associa o projeto
-railway up                 # builda e sobe a partir do Dockerfile
-railway domain             # gera a URL pública
+npx --yes @railway/cli@5.27.2 up --ci \
+  --environment production \
+  --service observatorio-educacao-rs
 ```
 
-## Segurança (o que já está coberto)
+O deploy manual é contingência, não o fluxo normal.
 
-- **Nenhum segredo na imagem.** O `.dockerignore` só deixa entrar `Caddyfile` e `public/`;
-  `.env`, credenciais GCP, `data/` e o código do pipeline ficam de fora. (O `.env` também é
-  git-ignored — nunca vai pro GitHub.)
-- **Superfície mínima.** Página 100% estática e autocontida; não há backend nem chamada externa
-  em runtime.
-- **Cabeçalhos de segurança** no `Caddyfile`: CSP travada (`default-src 'none'`, libera só
-  inline de CSS/JS e `data:` para o favicon), `X-Content-Type-Options`, `X-Frame-Options: DENY`,
-  `Referrer-Policy: no-referrer`, `Permissions-Policy` e `HSTS`.
-- **HTTPS** automático pelo Railway (TLS terminado na borda; o container escuta HTTP em `$PORT`).
-- **Header `Server` removido** (não expõe versão).
+## Segurança
 
-> Nota sobre a CSP: como o CSS e o JS são inline (peça autocontida), a política usa
-> `'unsafe-inline'` para `style-src`/`script-src`. É o padrão aceitável para páginas estáticas
-> self-contained; todo o resto fica bloqueado. Se um dia quiser CSP sem `unsafe-inline`, dá pra
-> migrar para hashes/nonce.
-
-## Atualizar o conteúdo
-
-O dado muda quando você roda o pipeline. Para publicar a versão nova:
-```bash
-python run_pipeline.py     # regenera public/index.html (entre outros)
-git commit -am "chore: atualiza dados publicados" && git push
-```
+- `.dockerignore` restringe o contexto da imagem a `Caddyfile` e `public/`.
+- O token existe somente como secret do GitHub e é injetado durante o job.
+- A `main` exige a CI antes do deploy.
+- O Caddy aplica CSP, HSTS, proteção contra framing, `nosniff` e política restritiva de
+  permissões.
+- O site é estático e não faz chamadas externas em runtime.

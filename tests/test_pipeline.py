@@ -58,6 +58,7 @@ def test_artefatos_publicaveis_foram_gerados():
     arquivos = [
         ROOT / "public" / "index.html",
         ROOT / "public" / "arquitetura.html",
+        ROOT / "public" / "data-status.json",
         ROOT / "assets" / "ideb.png",
         ROOT / "assets" / "taxa_aprovacao.png",
         ROOT / "assets" / "distorcao_idade_serie.png",
@@ -74,4 +75,11 @@ def test_artefatos_publicaveis_foram_gerados():
     assert "Duas rotas de entrada" in arquitetura
     assert "não acompanha alunos" in arquitetura
     assert "Limite de leitura" in arquitetura
-    assert arquivos[2].read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+    status = json.loads(arquivos[2].read_text(encoding="utf-8"))
+    assert status["schema_version"] == 1
+    latest_approval = _query(
+        "select max(ano) from fct_indicadores where indicador = 'taxa_aprovacao'"
+    )[0][0]
+    assert status["available_through"]["taxa_aprovacao"] == latest_approval
+    assert "Dados disponíveis:" in painel
+    assert arquivos[3].read_bytes().startswith(b"\x89PNG\r\n\x1a\n")

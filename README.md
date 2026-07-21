@@ -19,13 +19,13 @@ fácil de ampliar com novos indicadores e recortes.
 
 - **Engenharia de dados:** ingestão direta das planilhas oficiais do INEP para rendimento e
   distorção, BigQuery apenas para IDEB/SAEB, bronze em Parquet, dbt e DuckDB.
-- **Qualidade:** testes de schema, regras explícitas de validade, referências oficiais e
-  proveniência verificável por hash.
+- **Qualidade:** testes de schema, regras explícitas de validade, referências oficiais,
+  proveniência por hash e auditoria WCAG automatizada em Chromium.
 - **Produto:** gráficos versionados, painel editorial responsivo e explorador com tabela
   alternativa.
 - **Operação:** execução centralizada em um runner e deploy estático endurecido no Railway,
-  sem credenciais ou dados brutos na imagem. A CI reconstrói e testa o pipeline com fixtures
-  sintéticas; uma Action manual valida a ingestão real e preserva sua proveniência.
+  sem credenciais ou dados brutos na imagem. A CI reconstrói o pipeline, testa desktop e
+  celular; uma Action separada valida a ingestão real e preserva sua proveniência.
 - **Evolução:** o fato tidy permite acrescentar indicadores semelhantes sem redesenhar todo o
   fluxo. Novas granularidades, como escola e rede administrativa, têm um caminho claro para
   dimensões próprias.
@@ -146,6 +146,8 @@ todos os produtos.
 > [`viz/dashboard.html`](viz/dashboard.html) (abra localmente, pois o GitHub sanitiza JS) e
 > [`viz/arquitetura.html`](viz/arquitetura.html), além de [`public/index.html`](public/index.html)
 > e [`public/arquitetura.html`](public/arquitetura.html), prontos para a web.
+> O gerador também publica [`public/data-status.json`](public/data-status.json), contrato
+> legível por máquina com o último ano disponível de cada indicador e sua rota de origem.
 >
 > **No ar.** `Dockerfile` + `Caddyfile` (estático, endurecido) + `railway.toml` automatizam o
 > deploy no [Railway](https://railway.app/) com HTTPS, sem incluir credenciais ou dados brutos
@@ -157,10 +159,10 @@ Esta é uma arquitetura local e deliberadamente simples, adequada ao volume e à
 projeto. Parquet preserva as entradas, DuckDB executa a transformação analítica sem servidor e
 o Git registra código, SQL, testes, documentação e produtos publicados.
 
-A atualização oficial pode rodar sem uma nova consulta ao BigQuery: o workflow reutiliza o
-snapshot auditado de IDEB/SAEB embutido no painel versionado e atualiza aprovação/TDI diretamente
-do INEP. Isso mantém o processo reproduzível, mas não elimina a dependência de origem: migrar
-IDEB/SAEB para arquivos oficiais diretos continua sendo a evolução prevista.
+A atualização oficial pode rodar sem uma nova consulta ao BigQuery: o workflow restaura do
+painel o histórico auditado dos quatro grupos e substitui somente o último ano de aprovação/TDI
+pelas planilhas diretas do INEP. Isso reduz dezenas de downloads legados sem alterar a série.
+Migrar IDEB/SAEB para arquivos oficiais diretos continua sendo a evolução prevista.
 
 ## Metodologia
 
@@ -213,7 +215,7 @@ Em Bash (Linux, macOS ou WSL):
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.lock                 # versões reproduzíveis
 
 gcloud auth application-default login          # autentica o ADC (abre o navegador)
 cp .env.example .env                           # e preencha BILLING_PROJECT_ID
@@ -246,26 +248,25 @@ python ingestion/extract_inep.py                    # histórico completo
 ### Integração contínua sem credenciais
 
 O workflow [`ci.yml`](.github/workflows/ci.yml) roda em cada push e pull request. Ele cria um
-bronze sintético determinístico, executa `dbt build`, gera os gráficos e as páginas, roda testes
-de integração com pytest e preserva os artefatos por sete dias. A consulta real ao BigQuery não
-faz parte da CI e continua protegida por credenciais locais.
+bronze sintético determinístico, executa `dbt build`, gera os gráficos e as páginas, roda pytest
+e testa navegação e acessibilidade WCAG com Playwright + axe em desktop e celular. Os artefatos
+ficam preservados por sete dias. A consulta real ao BigQuery não faz parte da CI.
 
-O workflow manual [`refresh-inep.yml`](.github/workflows/refresh-inep.yml) exercita os downloads
-reais, valida as referências oficiais, reconstrói o produto e publica Parquet, proveniência,
-logs e páginas como artefatos por 14 dias. Quando as páginas mudam, o bot envia uma branch e
-abre um PR; o merge desse PR aciona o deploy normal do Railway.
+O workflow manual [`refresh-inep.yml`](.github/workflows/refresh-inep.yml) restaura o histórico
+auditado, baixa o último ano real, valida as referências oficiais, reconstrói o produto e publica
+Parquet, proveniência, logs e páginas como artefatos por 14 dias. Quando as páginas mudam, o bot
+envia uma branch e abre um PR.
 
 Esse fluxo não usa a fixture sintética no produto publicado. Para atualizar o site sem consultar
-o BigQuery, ele reconstrói `ideb.parquet` a partir do snapshot real de IDEB/SAEB embutido na
-última página versionada e substitui somente rendimento e TDI pelo histórico oficial recém
-baixado. A fixture continua restrita à CI offline.
+o BigQuery, ele reconstrói os dois bronzes a partir do snapshot real da última página versionada
+e faz upsert do ano mais recente de aprovação/TDI. A fixture continua restrita à CI offline.
 
 ## Estrutura
 
 ```
 ingestion/extract_bd.py   Base dos Dados (BigQuery) → Parquet bronze (IDEB + SAEB)
 ingestion/extract_inep.py planilhas oficiais INEP → Parquet (aprovação + TDI + proveniência)
-ingestion/load_ideb_snapshot.py  painel versionado → snapshot bronze de IDEB/SAEB
+ingestion/load_ideb_snapshot.py  painel versionado → bronzes históricos auditados
 dbt/models/staging/       stg_ideb, stg_indicadores (normalização + unpivot + contratos)
 dbt/models/marts/         fct_indicadores (fato tidy + testes)
 viz/make_charts.py        DuckDB → PNGs em assets/ (vitrine do README)
@@ -274,6 +275,9 @@ run_pipeline.py           orquestra as quatro etapas
 tests/                    fixtures e testes de integração offline
 .github/workflows/ci.yml  lint, dbt build, geração e testes em push/PR
 .github/workflows/refresh-inep.yml  atualização publicável com dados oficiais via PR
+.github/workflows/deploy.yml  deploy Railway após a CI verde na main
+tests/e2e/                navegação responsiva e acessibilidade WCAG em Chromium
+public/data-status.json   último ano disponível e fonte de cada indicador
 docs/PESQUISA_FONTES.md   fontes públicas, proveniência e limites de uso
 ```
 

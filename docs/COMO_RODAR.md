@@ -29,7 +29,7 @@ oferece uma franquia mensal de 1 TiB para consultas on-demand; uso excedente pod
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.lock
 ```
 
 ## Rodar o pipeline
@@ -62,13 +62,16 @@ dados sintéticos e sobrescreve temporariamente os arquivos em `data/`, `assets/
 `viz/`; por isso, prefira executá-la em um clone ou worktree separado.
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -r requirements.lock
+npm ci
+npx playwright install chromium
 python -m ruff check ingestion viz tests run_pipeline.py
 python tests/fixtures/make_bronze.py
 dbt build --project-dir dbt --profiles-dir dbt
 python viz/make_charts.py
 python viz/build_dashboard.py
 python -m pytest
+npm run test:e2e
 ```
 
 Os ZIPs ficam em cache sob `data/raw/inep/`. Cada execução gera
@@ -77,7 +80,7 @@ INEP pode oscilar, o extrator repete downloads interrompidos e reaproveita ZIPs 
 
 ## Atualizar o site sem BigQuery
 
-O workflow manual **Atualização oficial Inep** reconstrói o snapshot bronze de IDEB/SAEB a
-partir do painel real versionado, baixa o histórico completo de rendimento e TDI, executa dbt e
-regenera as páginas. Se houver diferença, ele abre um PR com `public/` e os HTMLs de inspeção.
-O site só muda depois que esse PR passa pela CI e é mergeado, preservando a proteção da `main`.
+O workflow manual **Atualização oficial Inep** reconstrói os bronzes históricos a partir do
+painel real versionado, baixa somente o último ano de rendimento/TDI e faz upsert dessas linhas.
+Depois executa dbt e regenera as páginas. Se houver diferença, abre um PR com `public/` e os
+HTMLs de inspeção. O site só muda depois da CI e do merge, preservando a proteção da `main`.
