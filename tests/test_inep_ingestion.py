@@ -3,7 +3,16 @@
 import pandas as pd
 import pytest
 
-from ingestion.extract_inep import _parse_rows, _requested_years, validate_reference
+from ingestion.extract_inep import _parse_rows, _requested_years, _session, validate_reference
+
+
+def test_sessao_inep_preserva_validacao_tls_com_intermediario():
+    session = _session()
+
+    assert session.verify is not False
+    bundle = open(session.verify, encoding="utf-8").read()
+    assert "BEGIN CERTIFICATE" in bundle
+    assert bundle.count("BEGIN CERTIFICATE") > 100
 
 
 def test_rendimento_escolhe_bloco_de_aprovacao_quando_etapas_se_repetem():

@@ -29,7 +29,7 @@ oferece uma franquia mensal de 1 TiB para consultas on-demand; uso excedente pod
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.lock
 ```
 
 ## Rodar o pipeline
@@ -62,13 +62,16 @@ dados sintéticos e sobrescreve temporariamente os arquivos em `data/`, `assets/
 `viz/`; por isso, prefira executá-la em um clone ou worktree separado.
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -r requirements.lock
+npm ci
+npx playwright install chromium
 python -m ruff check ingestion viz tests run_pipeline.py
 python tests/fixtures/make_bronze.py
 dbt build --project-dir dbt --profiles-dir dbt
 python viz/make_charts.py
 python viz/build_dashboard.py
 python -m pytest
+npm run test:e2e
 ```
 
 Os ZIPs ficam em cache sob `data/raw/inep/`. Cada execução gera

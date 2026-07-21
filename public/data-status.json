@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "available_through": {
+    "distorcao_idade_serie": 2025,
+    "ideb": 2023,
+    "saeb_lingua_portuguesa": 2023,
+    "saeb_matematica": 2023,
+    "taxa_aprovacao": 2025
+  },
+  "geographies": [
+    "brasil",
+    "rs",
+    "santa_maria"
+  ],
+  "sources": {
+    "taxa_aprovacao": "INEP — planilhas oficiais de rendimento",
+    "distorcao_idade_serie": "INEP — planilhas oficiais de TDI",
+    "ideb": "INEP via Base dos Dados — br_inep_ideb",
+    "saeb_matematica": "INEP via Base dos Dados — br_inep_ideb",
+    "saeb_lingua_portuguesa": "INEP via Base dos Dados — br_inep_ideb"
+  }
+}

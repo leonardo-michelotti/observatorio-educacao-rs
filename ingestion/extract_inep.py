@@ -22,21 +22,20 @@ from io import BytesIO
 from pathlib import Path
 from typing import Iterable, Iterator, Sequence
 
+import certifi
 import pandas as pd
 import requests
-import truststore
 import xlrd
 from openpyxl import load_workbook
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-
-truststore.inject_into_ssl()
 
 ROOT = Path(__file__).resolve().parents[1]
 BRONZE = ROOT / "data" / "bronze"
 CACHE = ROOT / "data" / "raw" / "inep"
 SOURCES_PATH = Path(__file__).with_name("inep_sources.json")
 REFERENCE_PATH = Path(__file__).with_name("inep_reference_values.json")
+INEP_INTERMEDIATE = Path(__file__).with_name("certs") / "rnp-icpedu-gr46-ov-tls-ca-2025.pem"
 MUNICIPIO_SANTA_MARIA = 4316907
 LEVELS = ("brasil", "rs", "santa_maria")
 
@@ -255,6 +254,16 @@ def parse_archive(
     return found
 
 
+def _ca_bundle() -> Path:
+    """Combina raízes Mozilla com o intermediário que o host legado do Inep não envia."""
+    destination = CACHE / "ca-bundle.pem"
+    content = Path(certifi.where()).read_bytes() + b"\n" + INEP_INTERMEDIATE.read_bytes()
+    if not destination.exists() or destination.read_bytes() != content:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(content)
+    return destination
+
+
 def _session() -> requests.Session:
     retry = Retry(
         total=3,
@@ -266,6 +275,7 @@ def _session() -> requests.Session:
     )
     session = requests.Session()
     session.headers["User-Agent"] = "observatorio-educacao-rs/1.0 (dados publicos)"
+    session.verify = str(_ca_bundle())
     session.mount("https://", HTTPAdapter(max_retries=retry))
     return session
 

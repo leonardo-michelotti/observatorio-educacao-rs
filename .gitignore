@@ -25,6 +25,8 @@ dbt/.user.yml
 # Evidence / Node (fase futura)
 node_modules/
 .evidence/
+playwright-report/
+test-results/
 
 # Previews temporários de render (screenshots/cópias de teste da viz)
 viz/_*.png

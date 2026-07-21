@@ -19,13 +19,13 @@ fácil de ampliar com novos indicadores e recortes.
 
 - **Engenharia de dados:** ingestão direta das planilhas oficiais do INEP para rendimento e
   distorção, BigQuery apenas para IDEB/SAEB, bronze em Parquet, dbt e DuckDB.
-- **Qualidade:** testes de schema, regras explícitas de validade, referências oficiais e
-  proveniência verificável por hash.
+- **Qualidade:** testes de schema, regras explícitas de validade, referências oficiais,
+  proveniência por hash e auditoria WCAG automatizada em Chromium.
 - **Produto:** gráficos versionados, painel editorial responsivo e explorador com tabela
   alternativa.
 - **Operação:** execução centralizada em um runner e deploy estático endurecido no Railway,
-  sem credenciais ou dados brutos na imagem. A CI reconstrói e testa o pipeline com fixtures
-  sintéticas; uma Action manual valida a ingestão real e preserva sua proveniência.
+  sem credenciais ou dados brutos na imagem. A CI reconstrói o pipeline, testa desktop e
+  celular; uma Action separada valida a ingestão real e preserva sua proveniência.
 - **Evolução:** o fato tidy permite acrescentar indicadores semelhantes sem redesenhar todo o
   fluxo. Novas granularidades, como escola e rede administrativa, têm um caminho claro para
   dimensões próprias.
@@ -146,6 +146,8 @@ todos os produtos.
 > [`viz/dashboard.html`](viz/dashboard.html) (abra localmente, pois o GitHub sanitiza JS) e
 > [`viz/arquitetura.html`](viz/arquitetura.html), além de [`public/index.html`](public/index.html)
 > e [`public/arquitetura.html`](public/arquitetura.html), prontos para a web.
+> O gerador também publica [`public/data-status.json`](public/data-status.json), contrato
+> legível por máquina com o último ano disponível de cada indicador e sua rota de origem.
 >
 > **No ar.** `Dockerfile` + `Caddyfile` (estático, endurecido) + `railway.toml` automatizam o
 > deploy no [Railway](https://railway.app/) com HTTPS, sem incluir credenciais ou dados brutos
@@ -213,7 +215,7 @@ Em Bash (Linux, macOS ou WSL):
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.lock                 # versões reproduzíveis
 
 gcloud auth application-default login          # autentica o ADC (abre o navegador)
 cp .env.example .env                           # e preencha BILLING_PROJECT_ID
@@ -246,9 +248,9 @@ python ingestion/extract_inep.py                    # histórico completo
 ### Integração contínua sem credenciais
 
 O workflow [`ci.yml`](.github/workflows/ci.yml) roda em cada push e pull request. Ele cria um
-bronze sintético determinístico, executa `dbt build`, gera os gráficos e as páginas, roda testes
-de integração com pytest e preserva os artefatos por sete dias. A consulta real ao BigQuery não
-faz parte da CI e continua protegida por credenciais locais.
+bronze sintético determinístico, executa `dbt build`, gera os gráficos e as páginas, roda pytest
+e testa navegação e acessibilidade WCAG com Playwright + axe em desktop e celular. Os artefatos
+ficam preservados por sete dias. A consulta real ao BigQuery não faz parte da CI.
 
 O workflow manual [`refresh-inep.yml`](.github/workflows/refresh-inep.yml) exercita os downloads
 reais, valida as referências oficiais, reconstrói o produto e publica Parquet, proveniência,
@@ -274,6 +276,9 @@ run_pipeline.py           orquestra as quatro etapas
 tests/                    fixtures e testes de integração offline
 .github/workflows/ci.yml  lint, dbt build, geração e testes em push/PR
 .github/workflows/refresh-inep.yml  atualização publicável com dados oficiais via PR
+.github/workflows/deploy.yml  deploy Railway após a CI verde na main
+tests/e2e/                navegação responsiva e acessibilidade WCAG em Chromium
+public/data-status.json   último ano disponível e fonte de cada indicador
 docs/PESQUISA_FONTES.md   fontes públicas, proveniência e limites de uso
 ```
 

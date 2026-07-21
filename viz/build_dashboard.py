@@ -19,6 +19,7 @@ OUT = ROOT / "viz" / "dashboard.html"          # versão p/ o Artifact (só cont
 PUB = ROOT / "public" / "index.html"           # versão standalone p/ web/Railway
 ARCH_OUT = ROOT / "viz" / "arquitetura.html"
 ARCH_PUB = ROOT / "public" / "arquitetura.html"
+STATUS_PUB = ROOT / "public" / "data-status.json"
 
 
 def load_nested():
@@ -52,6 +53,26 @@ def _latest_common(nested, indicator, stage, levels=("brasil", "rs", "santa_mari
 
 def _percent(value):
     return f"{value:.1f}".replace(".", ",")
+
+
+def _data_status(nested):
+    latest = {
+        indicator: max(year for stages in nested[indicator].values()
+                       for series in stages.values() for year, _ in series)
+        for indicator in nested
+    }
+    return {
+        "schema_version": 1,
+        "available_through": latest,
+        "geographies": ["brasil", "rs", "santa_maria"],
+        "sources": {
+            "taxa_aprovacao": "INEP — planilhas oficiais de rendimento",
+            "distorcao_idade_serie": "INEP — planilhas oficiais de TDI",
+            "ideb": "INEP via Base dos Dados — br_inep_ideb",
+            "saeb_matematica": "INEP via Base dos Dados — br_inep_ideb",
+            "saeb_lingua_portuguesa": "INEP via Base dos Dados — br_inep_ideb",
+        },
+    }
 
 
 SITE_NAV = r"""<nav class="site-nav" aria-label="Navegação principal">
@@ -186,7 +207,8 @@ HTML = r"""<main class="paper">
     <div class="foot-meta">
       <span>Fonte: planilhas oficiais do INEP · IDEB/SAEB via <code>br_inep_ideb</code></span>
       <span>Santa Maria/RS · IBGE <code>4316907</code></span>
-      <span>IDEB e SAEB: rede pública · demais indicadores: rede total · 2005–2025</span>
+      <span class="data-freshness">Dados disponíveis: IDEB/SAEB até __IDEB_YEAR__ · aprovação/TDI até __FLOW_YEAR__</span>
+      <span>IDEB e SAEB: rede pública · demais indicadores: rede total</span>
       <span class="foot-author">Projeto desenvolvido por <a href="https://github.com/leonardo-michelotti" target="_blank" rel="noopener noreferrer">Leonardo Michelotti</a>. Código e metodologia disponíveis no <a href="https://github.com/leonardo-michelotti/observatorio-educacao-rs" target="_blank" rel="noopener noreferrer">GitHub</a>.</span>
     </div>
   </footer>
@@ -521,18 +543,18 @@ button.onclick=()=>{const next=currentTheme()==="dark"?"light":"dark";root.setAt
 
 CSS = r"""
 :root{
-  --paper:#f5f4ef; --ink:#1c1b16; --ink-2:#565349; --muted:#928e82; --rule:#d8d5cb; --rule-2:#e6e3da;
+  --paper:#f5f4ef; --ink:#1c1b16; --ink-2:#565349; --muted:#68655c; --rule:#d8d5cb; --rule-2:#e6e3da;
   --sm:#c1402a; --br:#3f3c34; --rs:#a29d90;
   --font-serif:"Iowan Old Style","Charter","Sorts Mill Goudy","Georgia","Times New Roman",serif;
   --font-sans:ui-sans-serif,"Avenir Next","Segoe UI",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){
-  :root{ --paper:#16150f; --ink:#efe9d9; --ink-2:#b2ac9a; --muted:#787366; --rule:#2e2b22; --rule-2:#221f18;
+  :root{ --paper:#16150f; --ink:#efe9d9; --ink-2:#b2ac9a; --muted:#aaa493; --rule:#2e2b22; --rule-2:#221f18;
     --sm:#e0603f; --br:#c9c3b2; --rs:#7c7768; }
 }
-:root[data-theme="light"]{ --paper:#f5f4ef; --ink:#1c1b16; --ink-2:#565349; --muted:#928e82; --rule:#d8d5cb; --rule-2:#e6e3da;
+:root[data-theme="light"]{ --paper:#f5f4ef; --ink:#1c1b16; --ink-2:#565349; --muted:#68655c; --rule:#d8d5cb; --rule-2:#e6e3da;
   --sm:#c1402a; --br:#3f3c34; --rs:#a29d90; }
-:root[data-theme="dark"]{ --paper:#16150f; --ink:#efe9d9; --ink-2:#b2ac9a; --muted:#787366; --rule:#2e2b22; --rule-2:#221f18;
+:root[data-theme="dark"]{ --paper:#16150f; --ink:#efe9d9; --ink-2:#b2ac9a; --muted:#aaa493; --rule:#2e2b22; --rule-2:#221f18;
   --sm:#e0603f; --br:#c9c3b2; --rs:#7c7768; }
 
 *{box-sizing:border-box}
@@ -739,6 +761,7 @@ def _nav(current: str, analysis_href: str = "index.html") -> str:
 
 def main():
     nested = load_nested()
+    status = _data_status(nested)
     data_json = json.dumps(nested, ensure_ascii=False, separators=(",", ":"))
     content = HTML.replace("__DATA__", data_json)
     aprov_by_stage = {
@@ -775,6 +798,11 @@ def main():
         "__TDI_AF_BR__": _percent(tdi_af["brasil"]),
         "__TDI_EM_SM__": _percent(tdi_em["santa_maria"]),
         "__TDI_EM_BR__": _percent(tdi_em["brasil"]),
+        "__IDEB_YEAR__": str(status["available_through"]["ideb"]),
+        "__FLOW_YEAR__": str(min(
+            status["available_through"]["taxa_aprovacao"],
+            status["available_through"]["distorcao_idade_serie"],
+        )),
     }
     for marker, value in replacements.items():
         content = content.replace(marker, value)
@@ -799,11 +827,15 @@ def main():
     PUB.parent.mkdir(parents=True, exist_ok=True)
     PUB.write_text(_standalone(title, desc, style, body), encoding="utf-8")
     ARCH_PUB.write_text(_standalone(arch_title, arch_desc, style, arch_body), encoding="utf-8")
+    STATUS_PUB.write_text(
+        json.dumps(status, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
 
     print(f"OK {OUT.relative_to(ROOT)} ({OUT.stat().st_size/1024:.1f} KB)")
     print(f"OK {PUB.relative_to(ROOT)} ({PUB.stat().st_size/1024:.1f} KB)")
     print(f"OK {ARCH_OUT.relative_to(ROOT)} ({ARCH_OUT.stat().st_size/1024:.1f} KB)")
     print(f"OK {ARCH_PUB.relative_to(ROOT)} ({ARCH_PUB.stat().st_size/1024:.1f} KB)")
+    print(f"OK {STATUS_PUB.relative_to(ROOT)} ({STATUS_PUB.stat().st_size/1024:.1f} KB)")
 
 
 if __name__ == "__main__":

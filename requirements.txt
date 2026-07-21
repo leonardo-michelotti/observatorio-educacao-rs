@@ -5,7 +5,7 @@ db-dtypes>=1.2          # converte resultado do BigQuery -> pandas
 pandas>=2.0
 pyarrow>=15
 requests>=2.32
-truststore>=0.10
+certifi>=2026.6.17     # raízes Mozilla + intermediário INEP versionado separadamente
 openpyxl>=3.1
 xlrd>=2.0
 
