@@ -77,6 +77,9 @@ def test_artefatos_publicaveis_foram_gerados():
     assert "Limite de leitura" in arquitetura
     status = json.loads(arquivos[2].read_text(encoding="utf-8"))
     assert status["schema_version"] == 1
-    assert status["available_through"]["taxa_aprovacao"] >= 2025
+    latest_approval = _query(
+        "select max(ano) from fct_indicadores where indicador = 'taxa_aprovacao'"
+    )[0][0]
+    assert status["available_through"]["taxa_aprovacao"] == latest_approval
     assert "Dados disponíveis:" in painel
     assert arquivos[3].read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
